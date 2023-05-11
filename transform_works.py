@@ -73,7 +73,7 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 	
 	def endElement(self, tag):
 		# take available parts of publication date
-		if "/work:work/common:publication-date" == self.path and \
+		if "/work:work/common:publication-date" == self.curPath and \
 			"/work:work/common:publication-date/common:year" in self.data:
 				date = self.data["/work:work/common:publication-date/common:year"]
 				del self.data["/work:work/common:publication-date/common:year"]
@@ -134,29 +134,34 @@ def process_source(config):
 	count = 0
 	
 	logging.info("\t process source: " + fileName)
-	parser = lib.xml_parse.Parser()
 	
-	if config["toDownload"]:
-		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + config["url"])
-	
-	with open(OUT_DIR + "/works_"+fileName_local+".jsonl", 'w', encoding='utf-8') as outFile:
-		with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
-			for member in tar:
-				if "_works_" in member.name:
-					handler = PublicationHandler(SEARCH_FOR)
-					publ = parser.parse(handler, tar.extractfile(member))
-					
-					fileName = member.name.split("/")[-1]
-					publ["orcid_publication_id"] = fileName.split(".")[0]
-					publ["orcid_id"] = fileName.split("_")[0]
-					
-					json.dump(publ, outFile)
-					outFile.write('\n')
+	try:
+		parser = lib.xml_parse.Parser()
+		
+		if config["toDownload"]:
+			os.system("wget -O " + OUT_DIR_RAW + fileName + " " + config["url"])
+		
+		with open(OUT_DIR + "/works_"+fileName_local+".jsonl", 'w', encoding='utf-8') as outFile:
+			with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
+				for member in tar:
+					if "_works_" in member.name:
+						handler = PublicationHandler(SEARCH_FOR)
+						publ = parser.parse(handler, tar.extractfile(member))
 						
-					count += 1
+						fileName = member.name.split("/")[-1]
+						publ["orcid_publication_id"] = fileName.split(".")[0]
+						publ["orcid_id"] = fileName.split("_")[0]
+						
+						json.dump(publ, outFile)
+						outFile.write('\n')
+							
+						count += 1
 					
+	except:
+		logging.exception(sys.exc_info()[0])
 					
-	logging.info("\t .. source " + fileName + " done: " + str(count) + " records")
+	else:
+		logging.info("\t .. source " + fileName + " done: " + str(count) + " records")
 					
 	return count
 
@@ -189,6 +194,6 @@ def run(toDownload):
 ### entry
 if "__main__" == __name__:
 	try:
-		run(True)
+		run(False)
 	except:
 		logging.exception(sys.exc_info()[0])
