@@ -13,33 +13,31 @@ def run():
 	# init spark session
 	spark = SparkSession	\
 				.builder	\
-				.appName('ORCID')	\
 				.getOrCreate()
 	
 	# load data
 	df_persons = spark.read.json("output/persons.jsonl")
+	df_works = spark.read.json("output/works_0.jsonl")
 	
 	
 	# configure metrics
-	metrics = {
-		"Completeness": [
-			Completeness1()
+	metrics = [
+			Completeness3()
 		]
-	}
+	
 	
 	# run metrics
-	result = {}
-	for dimension, metrics in metrics.items():
-		indicator = 0
-		for m in metrics:
-			indicator += m.calc(df_persons, df_persons)
-			
-		result[dimension] = indicator / len(metrics)
-	
+	results = {}
+	for m in metrics:
+		logging.info("start " + m.getName() + " ..")
+		results.update(m.calc(df_persons, df_works))
+
+	print(results)
 	
 	# save results
-	with open('repo/quality.json', 'w') as outFile:
-		json.dump(result, outFile)
+	with open('repo/quality.jsonl', 'w') as outFile:
+		json_string = json.dumps(results, indent=4)
+		outFile.write(json_string)
 	
 	
 	logging.info(".. analyzing done")

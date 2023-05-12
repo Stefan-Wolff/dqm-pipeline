@@ -135,33 +135,28 @@ def process_source(config):
 	
 	logging.info("\t process source: " + fileName)
 	
-	try:
-		parser = lib.xml_parse.Parser()
-		
-		if config["toDownload"]:
-			os.system("wget -O " + OUT_DIR_RAW + fileName + " " + config["url"])
-		
-		with open(OUT_DIR + "/works_"+fileName_local+".jsonl", 'w', encoding='utf-8') as outFile:
-			with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
-				for member in tar:
-					if "_works_" in member.name:
-						handler = PublicationHandler(SEARCH_FOR)
-						publ = parser.parse(handler, tar.extractfile(member))
-						
-						fileName = member.name.split("/")[-1]
-						publ["orcid_publication_id"] = fileName.split(".")[0]
-						publ["orcid_id"] = fileName.split("_")[0]
-						
-						json.dump(publ, outFile)
-						outFile.write('\n')
-							
-						count += 1
+	parser = lib.xml_parse.Parser()
+	
+	if config["toDownload"]:
+		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + config["url"])
+	
+	with open(OUT_DIR + "/works_"+fileName_local+".jsonl", 'w', encoding='utf-8') as outFile:
+		with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
+			for member in tar:
+				if "_works_" in member.name:
+					handler = PublicationHandler(SEARCH_FOR)
+					publ = parser.parse(handler, tar.extractfile(member))
 					
-	except:
-		logging.exception(sys.exc_info()[0])
+					fileName = member.name.split("/")[-1]
+					publ["orcid_publication_id"] = fileName.split(".")[0]
+					publ["orcid_id"] = fileName.split("_")[0]
 					
-	else:
-		logging.info("\t .. source " + fileName + " done: " + str(count) + " records")
+					json.dump(publ, outFile)
+					outFile.write('\n')
+						
+					count += 1
+					
+	logging.info("\t .. source " + fileName + " done: " + str(count) + " records")
 					
 	return count
 
@@ -170,25 +165,13 @@ def process_source(config):
 def run(toDownload):
 	logging.info("start transforming publications ..")
 	
-	urls = []
+	count = 0
 	with open(SOURCE_FILES, 'r', newline='') as inFile:
 		for url in inFile:
-			urls.append({"url": url, "toDownload": toDownload})
-		
-	logging.info("\t processing " + str(len(urls)) + " source files")
-		
-	count_sum = 0
-	with ProcessPoolExecutor() as pool:
-		results = pool.map(process_source, urls)
-
-	#results = [process_source("https://orcid.figshare.com/ndownloader/files/37635320")]
-	
-	for cur in results:
-		logging.info(cur)
-		count_sum += cur
+			count += process_source(url, toDownload)
 
 	
-	logging.info(str(count_sum) + " publications transformed")
+	logging.info(str(count) + " publications transformed")
 	
 
 ### entry
