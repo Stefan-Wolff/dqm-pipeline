@@ -22,7 +22,7 @@ def run():
 	
 	# configure metrics
 	metrics = [
-			Completeness3()
+			Completeness5()
 		]
 	
 	

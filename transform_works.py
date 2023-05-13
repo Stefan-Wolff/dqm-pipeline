@@ -127,8 +127,8 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 			
 			
 ### functions
-def process_source(config):
-	fileName_local = config["url"].strip().split("/")[-1]
+def process_source(url, toDownload):
+	fileName_local = url.strip().split("/")[-1]
 	fileName = fileName_local + ".gz"
 	
 	count = 0
@@ -137,8 +137,8 @@ def process_source(config):
 	
 	parser = lib.xml_parse.Parser()
 	
-	if config["toDownload"]:
-		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + config["url"])
+	if toDownload:
+		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + url)
 	
 	with open(OUT_DIR + "/works_"+fileName_local+".jsonl", 'w', encoding='utf-8') as outFile:
 		with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
@@ -177,6 +177,6 @@ def run(toDownload):
 ### entry
 if "__main__" == __name__:
 	try:
-		run(False)
+		run(True)
 	except:
 		logging.exception(sys.exc_info()[0])
