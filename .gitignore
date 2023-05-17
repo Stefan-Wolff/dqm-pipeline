@@ -2,4 +2,5 @@
 input
 output
 repo
+tmp
 **/__pycache__
