@@ -10,10 +10,11 @@ logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s",
 					filename	=	__file__.split(".")[0] + ".log",
 					level		=	logging.INFO)
 
+# url from https://orcid.figshare.com/articles/dataset/ORCID_Public_Data_File_2022/21220892
+SOURCE_URL = "https://orcid.figshare.com/ndownloader/files/37635374"
 
-SOURCE_URL = "https://orcid.figshare.com/ndownloader/files/37635374"			# 2022
-OUT_DIR_RAW = "output/raw/"
-OUT_FILE_TRANSFORMED = "output/persons.jsonl"
+TMP_DIR = "data/tmp/"
+OUT_FILE = "data/ORCID_persons.jsonl"
 
 SEARCH_FOR = {
 	"/record:record/person:person/person:name/personal-details:given-names": {"elementName": "firstName"},
@@ -71,19 +72,19 @@ SEARCH_FOR = {
 		
 
 ### main
-def run(toDownload):
+def run():
 	logging.info("start transforming persons ...")
 
 	fileName = SOURCE_URL.strip().split("/")[-1] + ".gz"
 
-	if toDownload:
-		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + SOURCE_URL)
+	os.system("mkdir -p " + TMP_DIR)
+	os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
 
 	count = 0
-	tar = tarfile.open(OUT_DIR_RAW + fileName)
+	tar = tarfile.open(TMP_DIR + fileName)
 	parser = lib.xml_parse.Parser()
 	
-	with open(OUT_FILE_TRANSFORMED, 'w', encoding='utf-8') as outFile:
+	with open(OUT_FILE, 'w', encoding='utf-8') as outFile:
 		for member in tar:
 			if member.isfile():				
 				handler = lib.xml_parse.XMLHandler(SEARCH_FOR)
@@ -97,12 +98,14 @@ def run(toDownload):
 				
 				count += 1
 	
+	os.system("rm " + TMP_DIR + fileName)
+	
 	logging.info(".. " + str(count) + " persons transformed")
 
 
 ### entry
 if "__main__" == __name__:
 	try:
-		run(False)
+		run()
 	except:
 		logging.exception(sys.exc_info()[0])

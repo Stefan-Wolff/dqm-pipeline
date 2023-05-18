@@ -3,12 +3,12 @@ import zipfile
 
 
 SOURCE_URL = "https://zenodo.org/record/7926988/files/v1.25-2023-05-11-ror-data.zip"
-OUT_DIR = "input/"
-TMP_DIR = "tmp/"
-ROR_FILE = "ror.csv"
+OUT_FILE = "data/ROR.csv"
+TMP_DIR = "data/tmp/"
 
 
 def run(toDownload):
+	os.system("mkdir -p " + TMP_DIR)
 	fileName = SOURCE_URL.split("/")[-1]
 	os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
 		
@@ -16,8 +16,8 @@ def run(toDownload):
 		for member in zip_ref.namelist():
 			if member.endswith(".csv"):
 				zip_ref.extract(member, TMP_DIR)
-				os.rename(TMP_DIR + member, OUT_DIR + ROR_FILE)
-				print(OUT_DIR + ROR_FILE, " loaded")			
+				os.rename(TMP_DIR + member, OUT_FILE)
+				print(OUT_FILE, " loaded")			
 				break
 
 	os.remove(TMP_DIR + fileName)

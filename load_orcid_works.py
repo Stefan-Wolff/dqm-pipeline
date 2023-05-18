@@ -16,9 +16,9 @@ logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s",
 					level		=	logging.INFO)
 
 
-SOURCE_FILES = "input/orcid_works_2022.lsv"
-OUT_DIR_RAW = "output/raw/"
-OUT_DIR = "output"
+SOURCE_FILES = "data/orcid_works_2022.lsv"
+OUT_DIR_RAW = "data/ORCID_works_raw/"
+OUT_DIR = "data/ORCID_works"
 
 SEARCH_FOR = {
 	"/work:work/work:title/common:title": {"elementName": "title"},
@@ -138,6 +138,8 @@ def process_source(url, toDownload):
 	parser = lib.xml_parse.Parser()
 	
 	if toDownload:
+		os.system("mkdir -p " + OUT_DIR)
+		os.system("mkdir -p " + OUT_DIR_RAW)
 		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + url)
 	
 	with open(OUT_DIR + "/works_"+fileName_local+".jsonl", 'w', encoding='utf-8') as outFile:

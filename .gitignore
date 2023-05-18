@@ -1,6 +1,4 @@
 *.log
-input
-output
+data
 repo
-tmp
 **/__pycache__
