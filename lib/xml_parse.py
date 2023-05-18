@@ -5,61 +5,7 @@ from collections import deque
 
 class XMLHandler(xml.sax.ContentHandler):
 
-	def __init__(self, searchFor):
-		self.searchFor = {
-			"/record:record/person:person/person:name/personal-details:given-names": {"elementName": "firstName"},
-			"/record:record/person:person/person:name/personal-details:family-name": {"elementName": "lastName"},
-			"/record:record/person:person/person:name/personal-details:credit-name": {"elementName": "publishedName"},
-			"/record:record/person:person/other-name:other-names/other-name:other-name/other-name:content": {"elementName": "otherNames"},
-			"/record:record/person:person/address:addresses/address:address/address:country": {"elementName": "country"},
-			
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:start-date/common:year": {
-				"elementName": "startYear",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:end-date/common:year": {
-				"elementName": "endYear",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:role-title": {
-				"elementName": "role",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:department-name": {
-				"elementName": "department",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:name": {
-				"elementName": "orgName",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:address/common:city": {
-				"elementName": "orgCity",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:address/common:country": {
-				"elementName": "orgCountry",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:disambiguated-organization/common:disambiguated-organization-identifier": {
-				"elementName": "orgID",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			},
-			"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:disambiguated-organization/common:disambiguation-source": {
-				"elementName": "orgIDType",
-				"groupName": "affiliations",
-				"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-			}
-		}
-		
+	def __init__(self, searchFor):		
 		self.searchFor = searchFor
 		
 		# order by group paths (second structure for easy access at XMLHandler#endElement())

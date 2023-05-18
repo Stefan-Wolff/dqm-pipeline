@@ -5,28 +5,38 @@ class Metric:
 	def getName(self):
 		return type(self).__name__
 		
-	def addResult(self, entity, local_key, value):
-		metric_key = self.getName() + "." + entity + "." + local_key
 		
-		return {metric_key: value}
+	def __formateResult(self, calc_result):
+		result = {}
+		weights = self._weights()
+		
+		for local_key, metric_result in calc_result.items():
+			indicator = metric_result[0] * weights[local_key]
+			result[self.getName() + "." + local_key] = round(indicator, 3)
+		
+		return result
 		
 		
-	def formateResult(self, entity, local_key, indicator):
-		rounded = round(indicator, 3)
+	def calc(self, df_persons, df_works, spark, sample_num):
+		result = self._calc(df_persons, df_works, spark)
 		
-		return self.addResult(entity, local_key, rounded)
+		self.__showSamples(result, sample_num)
+		
+		return self.__formateResult(result)
 		
 	
-	def showSample(self, dataFrame, num, name):
+	def __showSamples(self, calc_result, num):
 		if not num:
 			return
 
-		count = dataFrame.count()
-		
-		print("###\t Sample:  ", self.getName() + "." + name)
-		print("#\t count: " + str(count))
-		if count:
-			sample_size = num if (num < count) else count
-			fraction = sample_size / count
-			dataFrame.sample(fraction).show(num)
-		print("############################################")
+		for local_key, metric_result in calc_result.items():
+			dataFrame = metric_result[1]
+			count = dataFrame.count()
+			
+			print("###\t Sample:  ", self.getName() + "." + local_key)
+			print("#\t count: " + str(count))
+			if count:
+				sample_size = num if (num < count) else count
+				fraction = sample_size / count
+				dataFrame.sample(fraction).show(num)
+			print("############################################")
