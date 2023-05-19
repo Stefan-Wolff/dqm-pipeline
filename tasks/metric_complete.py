@@ -40,7 +40,7 @@ class Completeness1(Metric):
 			"works.url": 18						#	2	2	2	2	0	0	2	1	1	0	2	0	0	0	0	2	0	1	1
 		}
 
-	def calc(self, df_persons, df_works, spark):
+	def _calc(self, df_persons, df_works, spark):
 		result = {}
 		entities = {"persons": df_persons, "works": df_works}
 		

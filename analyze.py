@@ -13,7 +13,7 @@ def run(config):
 	
 	# load data
 	df_persons = spark.read.json("data/ORCID_persons.jsonl")
-	df_works = spark.read.json("data/works_0.jsonl")
+	df_works = spark.read.json("data/ORCID_works/*")
 	
 	
 	# configure metrics
