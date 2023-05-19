@@ -6,26 +6,38 @@ from pyspark.sql import Row
 
 class Completeness1(Metric):
 	def _weights(self):
+												#	persons.affiliations		works.authors
+												#		persons.country				works.bibtex
+												#			persons.firstName			works.date
+												#				persons.lastName			works.journal_title
+												#					persons.orcid_id			works.orcid_id
+												#						persons.otherNames			works.orcid_publication_id
+												#							persons.publishedName		works.publicationID
+												#															works.short_description
+												#																works.subTitle
+												#																	works.title
+												#																		works.type
+												#																			works.url
 		return {
-			"persons.affiliations": 1,
-			"persons.country": 1,
-			"persons.firstName": 1,
-			"persons.lastName": 1,
-			"persons.orcid_id": 1,
-			"persons.otherNames": 1,
-			"persons.publishedName": 1,
-			"works.authors": 1,
-			"works.bibtex": 1,
-			"works.date": 1,
-			"works.journal_title": 1,
-			"works.orcid_id": 1,
-			"works.orcid_publication_id": 1,
-			"works.publicationID": 1,
-			"works.short_description": 1,
-			"works.subTitle": 1,
-			"works.title": 1,
-			"works.type": 1,
-			"works.url": 1
+			"persons.affiliations": 11,			# 	1	2	0	0	0	1	2	0	2	0	1	0	0	1	0	1	0	0	0
+			"persons.country": 5,				#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	0	1	0	0	0
+			"persons.firstName": 20,			#	2	2	1	1	0	2	1	0	2	0	2	0	0	1	1	2	1	2	0
+			"persons.lastName": 21,				#	2	2	2	1	0	2	1	0	2	0	2	0	0	1	1	2	1	2	0
+			"persons.orcid_id": 35,				#	2	2	2	2	1	2	2	2	2	2	2	1	1	2	2	2	2	2	2
+			"persons.otherNames": 15,			#	1	2	0	0	0	1	1	0	1	0	2	0	0	0	0	2	1	2	2
+			"persons.publishedName": 17,		#	0	1	1	1	0	1	1	0	1	0	1	0	0	0	0	0	0	0	0
+			"works.authors": 28,				#	2	2	2	2	0	2	2	1	2	1	2	1	1	1	1	2	1	2	1
+			"works.bibtex": 8,					#	0	1	0	0	0	1	1	0	1	0	1	0	0	0	0	1	0	1	1
+			"works.date": 26,					#	2	2	2	2	0	2	2	1	2	1	2	0	0	0	1	2	1	2	2
+			"works.journal_title": 7,			#	2	1	0	0	0	0	1	0	1	0	1	0	0	0	0	1	0	0	0
+			"works.orcid_id": 35,				#	2	2	2	2	1	2	2	1	2	2	2	1	2	2	2	2	2	2	2
+			"works.orcid_publication_id": 25,	#	1	0	1	1	0	2	2	1	2	2	2	0	1	2	1	2	1	2	2
+			"works.publicationID": 25,			#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	1	2	1	2	2
+			"works.short_description": 26,		#	2	2	1	1	0	2	2	1	2	1	2	0	1	1	1	2	1	2	2
+			"works.subTitle": 7,				#	1	1	0	0	0	0	2	0	1	0	1	0	0	0	0	1	0	0	0
+			"works.title": 25,					#	2	2	1	1	0	1	2	1	2	1	2	0	1	1	1	2	1	2	2
+			"works.type": 13,					#	2	2	0	0	0	0	2	0	1	0	2	0	0	0	0	2	0	1	1
+			"works.url": 18						#	2	2	2	2	0	0	2	1	1	0	2	0	0	0	0	2	0	1	1
 		}
 
 	def calc(self, df_persons, df_works, spark):
@@ -47,10 +59,13 @@ class Completeness1(Metric):
 
 class Completeness2(Metric):
 	def _weights(self):
+										#	works.year
+										#		works.year-month
+										#			works.year-month-day
 		return {
-			"works.year": 1,
-			"works.year-month": 1,
-			"works.year-month-day": 1
+			"works.year": 5,			#	1	2	2
+			"works.year-month": 3,		#	0	1	2
+			"works.year-month-day": 1	#	0	0	1
 		}
 
 	def _calc(self, df_persons, df_works, spark):
@@ -78,9 +93,11 @@ class Completeness2(Metric):
 
 class Completeness3(Metric):
 	def _weights(self):
+									#	works.min-data
+									#		persons.min-data
 		return {
-			"works.min-data": 1,
-			"persons.min-data": 1
+			"works.min-data": 3,	#	1	2
+			"persons.min-data": 1	#	0	1
 		}
 
 	def _calc(self, df_persons, df_works, spark):
@@ -113,15 +130,23 @@ class Completeness4(Metric):
 		
 class Completeness5(Metric):
 	def _weights(self):
+														#	works.minLength.title
+														#		works.minLength.journal_title
+														#			works.minLength.short_description
+														#				works.minLength.subTitle
+														#					persons.minLength.firstName
+														#						persons.minLength.lastName
+														#							persons.minLength.otherNames
+														#								persons.minLength.publishedName
 		return {
-			"works.minLength.title": 1,
-			"works.minLength.journal_title": 1,
-			"works.minLength.short_description": 1,
-			"works.minLength.subTitle": 1,
-			"persons.minLength.firstName": 1,
-			"persons.minLength.lastName": 1,
-			"persons.minLength.otherNames": 1,
-			"persons.minLength.publishedName": 1
+			"works.minLength.title": 14,				#	1	2	1	2	2	2	2	2
+			"works.minLength.journal_title": 6,			#	0	1	0	1	1	1	1	1
+			"works.minLength.short_description": 14,	#	1	2	1	2	2	2	2	2
+			"works.minLength.subTitle": 9,				#	0	1	0	1	2	1	2	2	
+			"persons.minLength.firstName": 5,			#	0	1	0	0	1	1	1	1
+			"persons.minLength.lastName": 6,			#	0	1	0	1	1	1	1	1
+			"persons.minLength.otherNames": 5,			#	0	1	0	0	1	1	1	1
+			"persons.minLength.publishedName": 5		#	0	1	0	0	1	1	1	1
 		}
 
 	def _calc(self, df_persons, df_works, spark):
@@ -188,10 +213,13 @@ class Completeness6(Metric):
 	COUNTRIES = ["BE", "BG", "DK", "DE", "EE", "FI", "FR", "GB", "GR", "IE", "IT", "HR", "LV", "LT", "LU", "MT", "NL", "AT", "PL", "PT", "RO", "SE", "SK", "SI", "ES", "CZ", "HU", "UK", "CY", "AL", "AD", "IS", "LI", "MC", "ME", "NO", "SM", "CH", "RS", "UA", "BY"]
 
 	def _weights(self):
+														#	works.population.publicationDate
+														#		works.population.type
+														#			works.population.country
 		return {
-			"works.population.publicationDate": 1,
-			"works.population.type": 1,
-			"works.population.country": 1
+			"works.population.publicationDate": 5,		#	1	2	2
+			"works.population.type": 1,					#	0	1	0
+			"works.population.country": 3				#	0	2	1
 		}
 
 
