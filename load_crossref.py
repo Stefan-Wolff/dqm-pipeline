@@ -61,8 +61,8 @@ def fetch_data(record):
 	
 
 def transform(data):
-	outFile = OUT_DIR + str(data["index"]) + ".json"
-	with open(outFile, 'w', encoding='utf-8') as outFile:
+	outFile = OUT_DIR + str(data["index"]) + ".json.gz"
+	with gzip.open(outFile, 'wt', encoding='utf-8') as outFile:
 	
 		for source in data["sources"]:
 			with gzip.open(source, 'r') as file:
