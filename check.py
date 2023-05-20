@@ -10,9 +10,13 @@ def run():
 				.getOrCreate()
 	
 	# load data
-	df_persons = spark.read.json("data/ORCID_persons.jsonl")
+	#df_persons = spark.read.json("data/ORCID_persons.jsonl")
 	#df_works = spark.read.json("data/works_0.jsonl")
+	df_works = spark.read.json("data/ORCID_works/works_37635362.jsonl")
 	#df_crossref = spark.read.json("data/CrossRef/*", multiLine=True)
+	
+	
+	df_works.select(explode("publicationID.type")).distinct().show(1000)
 	
 	# types of org ids
 	#df_persons.select(explode("affiliations.orgIDType")).distinct().show(1000)
@@ -24,7 +28,7 @@ def run():
 
 	#df_persons.any({"country": "de"}).show(100)
 	
-	df_persons.select("affiliations").where(df_persons["affiliations.orgIDType"].isNotNull()).show(10, 100)
+	#df_persons.select("affiliations").where(df_persons["affiliations.orgIDType"].isNotNull()).show(10, 100)
 	
 	#df_crossref.printSchema()
 

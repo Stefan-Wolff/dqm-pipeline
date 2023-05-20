@@ -24,7 +24,7 @@ SEARCH_FOR = {
 	"/work:work/work:title/common:title": {"elementName": "title"},
 	"/work:work/work:title/common:subtitle": {"elementName": "subTitle"},
 	"/work:work/work:journal-title": {"elementName": "journal_title"},
-	"/work:work/work:short-description": {"elementName": "short_description"},
+	"/work:work/work:short-description": {"elementName": "abstract"},
 	"/work:work/work:citation/work:citation-type": {"elementName": None},									# read value, but not return
 	"/work:work/work:citation/work:citation-value": {"elementName": "bibtex"},
 	"/work:work/work:type": {"elementName": "type"},
@@ -33,21 +33,11 @@ SEARCH_FOR = {
 	"/work:work/common:publication-date/common:month": {"elementName": None},
 	"/work:work/common:publication-date/common:day": {"elementName": None},
 	"/work:work/common:url": {"elementName": "url"},
-	"/work:work/common:external-ids/common:external-id/common:external-id-type": {
-		"elementName": "type",
-		"groupName": "publicationID",
-		"groupPath": "/work:work/common:external-ids/common:external-id"
-	},
-	"/work:work/common:external-ids/common:external-id/common:external-id-value": {
-		"elementName": "id",
-		"groupName": "publicationID",
-		"groupPath": "/work:work/common:external-ids/common:external-id"
-	},
-	"/work:work/common:external-ids/common:external-id/common:external-id-normalized": {
-		"elementName": None,
-		"groupName": "publicationID",
-		"groupPath": "/work:work/common:external-ids/common:external-id"
-	},
+	"/work:work/common:external-ids/common:external-id/common:external-id-type": {"elementName": None},
+	"/work:work/common:external-ids/common:external-id/common:external-id-value": {"elementName": None},
+	"/work:work/common:external-ids/common:external-id/common:external-id-normalized": {"elementName": None},
+	"issn": {"elementName": "issn"},																		# based on external-id
+	"isbn": {"elementName": "isbn"},																		# based on external-id
 	"/work:work/work:contributors/work:contributor/work:credit-name": {
 		"elementName": "fullName",
 		"groupName": "authors",
@@ -116,12 +106,24 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 						del self.data["/work:work/work:contributors/work:contributor/common:contributor-orcid/common:path"]
 				
 		
-		# take normalized id if availabale
+		# issn & isbn
 		if "/work:work/common:external-ids/common:external-id" == self.curPath and \
-			"/work:work/common:external-ids/common:external-id/common:external-id-normalized" in self.data:
-			self.data["/work:work/common:external-ids/common:external-id/common:external-id-value"] = self.data["/work:work/common:external-ids/common:external-id/common:external-id-normalized"]	
-			del self.data["/work:work/common:external-ids/common:external-id/common:external-id-normalized"]
-	
+			"/work:work/common:external-ids/common:external-id/common:external-id-value" in self.data and \
+			"/work:work/common:external-ids/common:external-id/common:external-id-type" in self.data:
+			
+			id_value = self.data["/work:work/common:external-ids/common:external-id/common:external-id-value"]
+			del self.data["/work:work/common:external-ids/common:external-id/common:external-id-value"]
+			
+			if "/work:work/common:external-ids/common:external-id/common:external-id-normalized" in self.data:
+				id_value = self.data["/work:work/common:external-ids/common:external-id/common:external-id-normalized"]
+				del self.data["/work:work/common:external-ids/common:external-id/common:external-id-normalized"]
+			
+			for id_type in ["issn", "isbn"]:
+				if id_type == self.data["/work:work/common:external-ids/common:external-id/common:external-id-type"]:
+					self.data[id_type] = id_value
+				
+			del self.data["/work:work/common:external-ids/common:external-id/common:external-id-type"]
+
 	
 		super().endElement(tag)
 			
@@ -179,6 +181,6 @@ def run(toDownload):
 ### entry
 if "__main__" == __name__:
 	try:
-		run(True)
+		run(False)
 	except:
 		logging.exception(sys.exc_info()[0])

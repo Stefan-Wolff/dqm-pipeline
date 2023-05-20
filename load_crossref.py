@@ -1,8 +1,13 @@
 import os
 import gzip
 import json
+import logging
+import sys
 import multiprocessing
 
+logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s", 
+					filename	=	__file__.split(".")[0] + ".log",
+					level		=	logging.INFO)
 
 CORSSREF_TORRENT = "data/April2022Crossref.torrent"
 OUT_DIR = "data/CrossRef/"
@@ -40,7 +45,7 @@ def fetch_data(record):
 		result["title"] = record["title"][0] if (1 == len(record["title"])) else record["title"],
 	
 	if "abstract" in record:
-		result["description"] = record["abstract"]
+		result["abstract"] = record["abstract"]
 	
 	if "author" in record:
 		formatted_authors = formate_authors(record["author"])
@@ -50,8 +55,14 @@ def fetch_data(record):
 	if "subtitle" in record:
 		result["subTitle"] = record["subtitle"][0] if (1 == len(record["subtitle"])) else record["subtitle"]
 	
+	if "ISBN" in record:
+		result["isbn"] = record["ISBN"][0] if (1 == len(record["ISBN"])) else record["ISBN"]
+	
 	if "ISSN" in record:
 		result["issn"] = record["ISSN"][0] if (1 == len(record["ISSN"])) else record["ISSN"]
+		
+	if "URL" in record:
+		result["url"] = record["URL"][0] if (1 == len(record["URL"])) else record["URL"]
 
 	if "published" in record and "date-parts" in record["published"] and record["published"]["date-parts"]:
 		result["date"] = "-".join(str(e) for e in record["published"]["date-parts"][0])
@@ -62,16 +73,17 @@ def fetch_data(record):
 
 def transform(data):
 	outFile = OUT_DIR + str(data["index"]) + ".json.gz"
-	with gzip.open(outFile, 'wt', encoding='utf-8') as outFile:
+	logging.info("start " + outFile)
 	
+	with gzip.open(outFile, 'wt', encoding='utf-8') as outZip:
 		for source in data["sources"]:
 			with gzip.open(source, 'r') as file:
 				records = json.load(file)
 				for record in records["items"]:
-					json.dump(fetch_data(record), outFile)
-					outFile.write('\n')
+					json.dump(fetch_data(record), outZip)
+					outZip.write('\n')
 
-	print(outFile, "done")
+	logging.info(outFile, " done")
 	
 	
 ### main
@@ -86,7 +98,7 @@ def run():
 	for entry in os.listdir(TMP_DIR):
 		if os.path.isdir(TMP_DIR + entry):
 			source_files = os.listdir(TMP_DIR + entry)
-			sources_per_proc = int(len(source_files) / RESULT_NUM)
+			sources_per_proc = int(len(source_files) / RESULT_NUM) + 1
 			
 			ordered_sources = []
 			curr_data = None
@@ -117,4 +129,7 @@ def run():
 
 ### entry
 if "__main__" == __name__:
-	run()
+	try:
+		run()
+	except:
+		logging.exception(sys.exc_info()[0])

@@ -49,6 +49,9 @@ class XMLHandler(xml.sax.ContentHandler):
 		if self.curPath in self.groupPaths:
 			group_entry = {}
 			for group in self.groupPaths[self.curPath]:
+				if not group["groupName"]:
+					continue
+				
 				if group["elementPath"] in self.data:
 					if group["elementName"]:
 						group_entry[group["elementName"]] = self.data[group["elementPath"]]

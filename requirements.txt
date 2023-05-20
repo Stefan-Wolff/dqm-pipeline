@@ -1,2 +1,4 @@
 bibtexparser
 pyspark
+pylatexenc
+pylatexenc

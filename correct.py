@@ -12,13 +12,20 @@ def run():
 				.getOrCreate()
 	
 	# load data
-	df_persons = spark.read.json("data/ORCID_persons.jsonl")
+	df_persons = spark.read.json("data/ORCID_persons_0.jsonl")
 	df_works = spark.read.json("data/works_0.jsonl")
+	#df_works = spark.read.json("data/ORCID_works/works_37635248.jsonl")
 	
-	# pipe: analyse - correct - analyse
-	#indicator_before = Completeness1().calc(df_persons, df_works, spark)
-	df_persons, df_works = Correction1().correct(df_persons, df_works, spark)
-	#indicator_after = Completeness1().calc(df_persons, df_works, spark)
+	pipeline = [
+		ExtractBibtex()
+	]
+	
+	
+	# run pipeline
+	for task in pipeline:
+		df_persons, df_works = task.run(df_persons, df_works)
+	
+	
 
 
 
