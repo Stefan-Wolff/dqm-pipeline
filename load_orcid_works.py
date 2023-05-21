@@ -7,6 +7,7 @@ import sys
 import logging
 import json
 import tarfile
+import gzip
 import lib.xml_parse
 from concurrent.futures import ProcessPoolExecutor
 
@@ -144,7 +145,7 @@ def process_source(url, toDownload):
 		os.system("mkdir -p " + OUT_DIR_RAW)
 		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + url)
 	
-	with open(OUT_DIR + "/works_"+fileName_local+".jsonl", 'w', encoding='utf-8') as outFile:
+	with gzip.open(OUT_DIR + "/works_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outFile:
 		with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
 			for member in tar:
 				if "_works_" in member.name:

@@ -23,7 +23,9 @@ def run(config):
 			Completeness3(),
 			Completeness4(),
 			Completeness5(),
-			Completeness6()
+			Completeness6(),
+			None,
+			ContentCorrect8()
 		]
 	
 	

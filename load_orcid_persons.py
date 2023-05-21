@@ -4,6 +4,7 @@ import sys
 import logging
 import tarfile
 import json
+import gzip
 import lib.xml_parse
 
 logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s", 
@@ -14,7 +15,8 @@ logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s",
 SOURCE_URL = "https://orcid.figshare.com/ndownloader/files/37635374"
 
 TMP_DIR = "data/tmp/"
-OUT_FILE = "data/ORCID_persons.jsonl"
+OUT_DIR = "data/ORCID_persons/"
+RESULT_NUM = 32
 
 SEARCH_FOR = {
 	"/record:record/person:person/person:name/personal-details:given-names": {"elementName": "firstName"},
@@ -75,30 +77,53 @@ SEARCH_FOR = {
 def run():
 	logging.info("start transforming persons ...")
 
-	fileName = SOURCE_URL.strip().split("/")[-1] + ".gz"
+	localName = SOURCE_URL.strip().split("/")[-1]
+	fileName = localName + ".gz"
 
-	os.system("mkdir -p " + TMP_DIR)
-	os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
+	os.system("mkdir -p " + OUT_DIR)
+	#os.system("mkdir -p " + TMP_DIR)
+	#os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
 
 	count = 0
 	tar = tarfile.open(TMP_DIR + fileName)
 	parser = lib.xml_parse.Parser()
 	
-	with open(OUT_FILE, 'w', encoding='utf-8') as outFile:
-		for member in tar:
-			if member.isfile():				
-				handler = lib.xml_parse.XMLHandler(SEARCH_FOR)
-				person = parser.parse(handler, tar.extractfile(member))
-				
-				fileName = member.name.split("/")[-1]
-				person["orcid_id"] = fileName.split(".")[0]
+	member_num = 0
+	for member in tar:
+		member_num += 1
+		
+	max_per_file = int(member_num / RESULT_NUM) + 1
+	current_members = 0
+	file_index = 0
+	outFile = None
 
-				json.dump(person, outFile)
-				outFile.write('\n')
+	for member in tar:
+		if member.isfile():
+			if 0 == current_members:
+				if outFile:
+					outFile.close()
 				
-				count += 1
+				current_outName = OUT_DIR + localName + "_" + str(file_index) + ".jsonl.gz"
+				outFile = gzip.open(current_outName, 'wt', encoding='utf-8')
+				file_index += 1
+		
+			handler = lib.xml_parse.XMLHandler(SEARCH_FOR)
+			person = parser.parse(handler, tar.extractfile(member))
+			
+			member_fileName = member.name.split("/")[-1]
+			person["orcid_id"] = member_fileName.split(".")[0]
+
+			json.dump(person, outFile)
+			outFile.write('\n')
+			
+			count += 1
+			current_members += 1
+			if current_members == max_per_file:
+				current_members = 0
+
+	outFile.close()
 	
-	os.system("rm " + TMP_DIR + fileName)
+	#os.system("rm " + TMP_DIR + fileName)
 	
 	logging.info(".. " + str(count) + " persons transformed")
 
