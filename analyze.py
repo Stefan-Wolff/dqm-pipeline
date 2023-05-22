@@ -2,6 +2,7 @@ import json
 import argparse
 from pyspark.sql import SparkSession
 from tasks.metric_complete import *
+from tasks.metric_correct import *
 
 
 def run(config):
@@ -12,8 +13,10 @@ def run(config):
 				.getOrCreate()
 	
 	# load data
-	df_persons = spark.read.json("data/ORCID_persons.jsonl")
-	df_works = spark.read.json("data/ORCID_works/*")
+	df_persons = spark.read.json("data/ORCID_persons/*")
+	#df_works = spark.read.json("data/ORCID_works/*")
+	df_works = spark.read.json("data/ORCID_works/works_37635248.jsonl.gz")
+	#df_works = spark.read.json("data/works_0.jsonl")
 	
 	
 	# configure metrics
@@ -25,7 +28,8 @@ def run(config):
 			Completeness5(),
 			Completeness6(),
 			None,
-			ContentCorrect8()
+			ContentCorrect8(),
+			RangeCorrect8()
 		]
 	
 	
