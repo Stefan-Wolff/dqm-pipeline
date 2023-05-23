@@ -1,6 +1,7 @@
 import sys
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import explode, flatten
+from pyspark.storagelevel import StorageLevel
 
 
 def run():
@@ -10,11 +11,12 @@ def run():
 				.getOrCreate()
 	
 	# load data
-	df_persons = spark.read.json("data/ORCID_persons_0.jsonl")
+	#df_persons = spark.read.json("data/ORCID_persons_0.jsonl")
 	#df_works = spark.read.json("data/works_0.jsonl")
 	#df_works = spark.read.json("data/ORCID_works/works_37635362.jsonl")
-	#df_crossref = spark.read.json("data/CrossRef/*", multiLine=True)
+	df_crossref = spark.read.json("data/CrossRef/*", multiLine=True)
 
+	df_crossref.select("authors.fullName").sort(df_crossref["authors.fullName"].asc()).show(500)
 	#df_works.select(explode("publicationID.type")).distinct().show(1000)
 	
 	# types of org ids
