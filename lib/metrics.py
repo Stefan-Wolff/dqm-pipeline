@@ -24,7 +24,7 @@ class Metric:
 		
 		
 	def calc(self, df_persons, df_works, spark, sample_num):
-		result = self._calc(df_persons, df_works, spark)
+		result = self._calc(df_persons, df_works, spark, sample_num)
 		
 		self.__showSamples(result, sample_num)
 		

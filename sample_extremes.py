@@ -14,12 +14,12 @@ def run(config):
 	dataPath = "data/ORCID_persons/*" if ("person" == config.entity) else "data/ORCID_works/*"
 	dataFrame = spark.read.json(dataPath)
 
+
 	# print
 	dataFrame.where(dataFrame[config.attribute].isNotNull())	\
-			.select(config.attribute)	\
-			.sort(dataFrame[config.attribute].desc() if (config.desc) else dataFrame[config.attribute].asc())	\
-			.sample()	\
-			.show(config.sample_num, 100)
+			 .select(config.attribute)	\
+			 .sort(dataFrame[config.attribute].desc() if (config.desc) else dataFrame[config.attribute].asc())	\
+			 .show(config.sample_num, 100)
 
 
 if "__main__" == __name__:
