@@ -37,10 +37,11 @@ SEARCH_FOR = {
 	"/work:work/common:external-ids/common:external-id/common:external-id-type": {"elementName": None},
 	"/work:work/common:external-ids/common:external-id/common:external-id-value": {"elementName": None},
 	"/work:work/common:external-ids/common:external-id/common:external-id-normalized": {"elementName": None},
-	"issn": {"elementName": "issn"},																		# based on external-id
+	"doi": {"elementName": "doi"},																		# based on external-id
+	"isbn": {"elementName": "isbn"},																		# based on external-id
 	"isbn": {"elementName": "isbn"},																		# based on external-id
 	"/work:work/work:contributors/work:contributor/work:credit-name": {
-		"elementName": "fullName",
+		"elementName": "publishedName",
 		"groupName": "authors",
 		"groupPath": "/work:work/work:contributors/work:contributor"
 	},
@@ -107,7 +108,7 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 						del self.data["/work:work/work:contributors/work:contributor/common:contributor-orcid/common:path"]
 				
 		
-		# issn & isbn
+		# doi & issn & isbn
 		if "/work:work/common:external-ids/common:external-id" == self.curPath and \
 			"/work:work/common:external-ids/common:external-id/common:external-id-value" in self.data and \
 			"/work:work/common:external-ids/common:external-id/common:external-id-type" in self.data:
@@ -119,7 +120,7 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 				id_value = self.data["/work:work/common:external-ids/common:external-id/common:external-id-normalized"]
 				del self.data["/work:work/common:external-ids/common:external-id/common:external-id-normalized"]
 			
-			for id_type in ["issn", "isbn"]:
+			for id_type in ["doi", "issn", "isbn"]:
 				if id_type == self.data["/work:work/common:external-ids/common:external-id/common:external-id-type"]:
 					self.data[id_type] = id_value
 				
@@ -130,6 +131,14 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 			
 			
 ### functions
+def select_id(author, publ):
+	if "orcid_id" in author:
+		return author["orcid_id"]
+	else:
+		return publ["orcid_id"] + "_" + author["publishedName"]
+	
+	
+
 def process_source(url, toDownload):
 	fileName_local = url.strip().split("/")[-1]
 	fileName = fileName_local + ".gz"
@@ -145,21 +154,31 @@ def process_source(url, toDownload):
 		os.system("mkdir -p " + OUT_DIR_RAW)
 		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + url)
 	
-	with gzip.open(OUT_DIR + "/works_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outFile:
-		with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
-			for member in tar:
-				if "_works_" in member.name:
-					handler = PublicationHandler(SEARCH_FOR)
-					publ = parser.parse(handler, tar.extractfile(member))
-					
-					fileName = member.name.split("/")[-1]
-					publ["orcid_publication_id"] = fileName.split(".")[0]
-					publ["orcid_id"] = fileName.split("_")[0]
-					
-					json.dump(publ, outFile)
-					outFile.write('\n')
+	with gzip.open(OUT_DIR + "/works_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outWorks:
+		with gzip.open(OUT_DIR + "/authors_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outAuthors:
+			with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
+				for member in tar:
+					if "_works_" in member.name:
+						handler = PublicationHandler(SEARCH_FOR)
+						publ = parser.parse(handler, tar.extractfile(member))
 						
-					count += 1
+						fileName = member.name.split("/")[-1]
+						publ["orcid_publication_id"] = fileName.split(".")[0]
+						publ["orcid_id"] = fileName.split("_")[0]
+						
+						if "authors" in publ:
+							authors = publ["authors"]
+							for author in authors:
+								author["id"] = select_id(author, publ)
+								json.dump(author, outAuthors)
+								outAuthors.write('\n')
+							
+							publ["authors"] = [author["id"] for author in authors]
+						
+						json.dump(publ, outWorks)
+						outWorks.write('\n')
+
+						count += 1
 					
 	logging.info("\t .. source " + fileName + " done: " + str(count) + " records")
 					

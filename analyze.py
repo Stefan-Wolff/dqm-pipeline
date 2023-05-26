@@ -16,8 +16,8 @@ def run(config):
 	#df_persons = spark.read.json("data/ORCID_persons/*")
 	df_persons = spark.read.json("data/ORCID_persons_0.jsonl")
 	#df_works = spark.read.json("data/ORCID_works/*")
-	#df_works = spark.read.json("data/ORCID_works/works_37635248.jsonl.gz")
-	df_works = spark.read.json("data/ORCID_works_0.jsonl")
+	df_works = spark.read.json("data/ORCID_works/works_37635248.jsonl.gz")
+	#df_works = spark.read.json("data/ORCID_works_0.jsonl")
 	
 	
 	# init metrics
@@ -27,7 +27,8 @@ def run(config):
 			"NotNull": NotNull(),
 			"MinPopulation": MinPopulation(),
 			"MinObject": MinObject(),
-			"Completeness" : Completeness()
+			"Completeness" : Completeness(),
+			"CorrectSyntax": CorrectSyntax(),
 		}
 	
 	

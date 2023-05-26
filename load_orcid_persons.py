@@ -16,6 +16,7 @@ SOURCE_URL = "https://orcid.figshare.com/ndownloader/files/37635374"
 
 TMP_DIR = "data/tmp/"
 OUT_DIR = "data/ORCID_persons/"
+ORG_FILE = "data/orgUnits.json.gz"
 RESULT_NUM = 32
 
 SEARCH_FOR = {
@@ -37,11 +38,6 @@ SEARCH_FOR = {
 	},
 	"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:role-title": {
 		"elementName": "role",
-		"groupName": "affiliations",
-		"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-	},
-	"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:department-name": {
-		"elementName": "department",
 		"groupName": "affiliations",
 		"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
 	},
@@ -72,6 +68,18 @@ SEARCH_FOR = {
 	}
 }
 		
+### functions
+def isolate_orgUnit(affil):
+	result = {
+		"orgID": affil["orgID"] if ("orgID" in affil) else affil["orgName"]
+	}
+
+	for attr in ["orgIDType", "orgName", "orgCountry", "orgCity"]:
+		result[attr] = affil[attr]
+		del affil[attr]
+		
+	return result
+	
 
 ### main
 def run():
@@ -95,33 +103,46 @@ def run():
 	max_per_file = int(member_num / RESULT_NUM) + 1
 	current_members = 0
 	file_index = 0
-	outFile = None
+	outPerson = None
 
-	for member in tar:
-		if member.isfile():
-			if 0 == current_members:
-				if outFile:
-					outFile.close()
+	with gzip.open(ORG_FILE, 'wt', encoding='utf-8') as outOrg:
+		for member in tar:
+			if member.isfile():
+				if 0 == current_members:
+					if outPerson:
+						outPerson.close()
+					
+					current_outName = OUT_DIR + localName + "_" + str(file_index) + ".jsonl.gz"
+					outPerson = gzip.open(current_outName, 'wt', encoding='utf-8')
+					file_index += 1
+			
+				handler = lib.xml_parse.XMLHandler(SEARCH_FOR)
+				person = parser.parse(handler, tar.extractfile(member))
 				
-				current_outName = OUT_DIR + localName + "_" + str(file_index) + ".jsonl.gz"
-				outFile = gzip.open(current_outName, 'wt', encoding='utf-8')
-				file_index += 1
-		
-			handler = lib.xml_parse.XMLHandler(SEARCH_FOR)
-			person = parser.parse(handler, tar.extractfile(member))
-			
-			member_fileName = member.name.split("/")[-1]
-			person["orcid_id"] = member_fileName.split(".")[0]
+				member_fileName = member.name.split("/")[-1]
+				person["orcid_id"] = member_fileName.split(".")[0]
 
-			json.dump(person, outFile)
-			outFile.write('\n')
-			
-			count += 1
-			current_members += 1
-			if current_members == max_per_file:
-				current_members = 0
+				orgUnit = isolate_orgUnit(person)
+				if orgUnit:
+					json.dump(orgUnit, outOrg)
+					outOrg.write('\n')
 
-	outFile.close()
+				if "affiliations" in person:
+					affils = person["affiliations"]
+					for affil in affils:
+						orgUnit = isolate_orgUnit(affil)
+						json.dump(orgUnit, outOrg)
+						outOrg.write('\n')
+
+				json.dump(person, outPerson)
+				outPerson.write('\n')
+				
+				count += 1
+				current_members += 1
+				if current_members == max_per_file:
+					current_members = 0
+
+		outPerson.close()
 	
 	#os.system("rm " + TMP_DIR + fileName)
 	
