@@ -2,7 +2,7 @@ import json
 import argparse
 from pyspark.sql import SparkSession
 from tasks.metric_completeness import *
-from tasks.metric_correct import *
+from tasks.metric_correctness import *
 
 
 def run(config):

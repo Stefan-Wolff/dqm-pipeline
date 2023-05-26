@@ -104,3 +104,4 @@ class RangeCorrect8(Metric):
 
 		
 		return result
+		

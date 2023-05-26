@@ -229,13 +229,12 @@ class MinObject(Metric):
 
 		
 class Completeness(Metric):
-	def _weights(self):
 									#	MinLength
 									#		MinValue
 									#			NotNull
 									#				MinPopulation
 									#					MinObject
-		return {
+	WEIGHTS = {
 			"MinLength": 5,			#	1	2	0	2	0
 			"MinValue": 2,			#	0	1	0	1	0
 			"NotNull": 7,			#	2	2	1	2	0
@@ -243,15 +242,40 @@ class Completeness(Metric):
 			"MinObject": 9			#	2	2	2	2	1
 		}
 
-	def _calc(self, df_persons, df_works, spark, sample_num):
-		result = {}
+
+	def _weights(self):
+		return Completeness.WEIGHTS
+
+
+	def __formateResult(self, calc_result):
+		result = dict(calc_result)
+		weights = Completeness.WEIGHTS
+		sum_indicators = 0
+		sum_weights = 0
 		
-		result.update(MinLength()._calc(df_persons, df_works, spark))
-		result.update(MinValue()._calc(df_persons, df_works, spark))
-		result.update(NotNull()._calc(df_persons, df_works, spark))
-		result.update(MinPopulation()._calc(df_persons, df_works, spark))
-		result.update(MinObject()._calc(df_persons, df_works, spark))
+		for local_key in weights.keys():
+			indicator = calc_result[local_key]
+			sum_indicators += indicator * weights[local_key]
+			sum_weights += weights[local_key]
+			
+			del calc_result[local_key]
+			result[self.getName() + "." + local_key] = round(indicator, 3)
 		
+		result[self.getName()] = round(sum_indicators / sum_weights, 3)
 		
 		return result
+
+
+	def calc(self, df_persons, df_works, spark, sample_num):
+		result = {}
+		
+		result.update(MinLength().calc(df_persons, df_works, spark, sample_num))
+		result.update(MinValue().calc(df_persons, df_works, spark, sample_num))
+		result.update(NotNull().calc(df_persons, df_works, spark, sample_num))
+		result.update(MinPopulation().calc(df_persons, df_works, spark, sample_num))
+		result.update(MinObject().calc(df_persons, df_works, spark, sample_num))
+		
+		
+		return self.__formateResult(result)
+		
 		
