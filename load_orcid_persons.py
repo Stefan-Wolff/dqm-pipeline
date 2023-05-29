@@ -46,16 +46,6 @@ SEARCH_FOR = {
 		"groupName": "affiliations",
 		"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
 	},
-	"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:address/common:city": {
-		"elementName": "orgCity",
-		"groupName": "affiliations",
-		"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-	},
-	"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:address/common:country": {
-		"elementName": "orgCountry",
-		"groupName": "affiliations",
-		"groupPath": "/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary"
-	},
 	"/record:record/activities:activities-summary/activities:employments/activities:affiliation-group/employment:employment-summary/common:organization/common:disambiguated-organization/common:disambiguated-organization-identifier": {
 		"elementName": "orgID",
 		"groupName": "affiliations",
@@ -70,13 +60,18 @@ SEARCH_FOR = {
 		
 ### functions
 def isolate_orgUnit(affil):
-	result = {
-		"orgID": affil["orgID"] if ("orgID" in affil) else affil["orgName"]
-	}
+	result = {}
+	
+	if "orgID" in affil:
+		result["id"] = affil["orgID"]
+	elif "orgName" in affil:
+		result["id"] = affil["orgName"]
 
-	for attr in ["orgIDType", "orgName", "orgCountry", "orgCity"]:
-		result[attr] = affil[attr]
-		del affil[attr]
+	if "orgIDType" in affil:
+		result["type"] = affil["orgIDType"]
+		
+	if "orgName" in affil:
+		result["name"] = affil["orgName"]
 		
 	return result
 	
@@ -89,7 +84,7 @@ def run():
 	fileName = localName + ".gz"
 
 	os.system("mkdir -p " + OUT_DIR)
-	#os.system("mkdir -p " + TMP_DIR)
+	os.system("mkdir -p " + TMP_DIR)
 	#os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
 
 	count = 0

@@ -1,171 +1,150 @@
-import datetime
+from datetime import datetime
 from pyspark.sql.functions import explode, year
-from pyspark.sql.types import IntegerType
+from pyspark.sql.types import IntegerType, ArrayType
 from lib.metrics import Metric
 
 
-# persons.affiliations.orgName
-class CorrectValue_orgName(Metric):
-	def _weights(self):
-		return {								# same weights because all ids resulting in the same attribute: organization name
-			"orgUnit.grid": 1,
-			"orgUnit.ror": 1,
-			"orgUnit.lei": 1,
-			"orgUnit.fundref": 1
-		}
-	
-	def _calc(self, df_persons, df_works, spark):
-		result = {}
-		
-		df_affiliations = df_persons.withColumn("affil_exploded", explode("affiliations"))
-		df_ror = spark.read.csv("data/ROR.csv", header=True)
-		
-		# GRID
-		df_grid = df_affiliations.where(df_affiliations["affil_exploded.orgIDType"] == "GRID")
-		df_grid_incorrect = df_grid.join(df_ror, (df_grid["affil_exploded.orgID"] == df_ror["`external_ids.GRID.preferred`"]) & \
-												 (df_grid["affil_exploded.orgName"] != df_ror["name"]) \
-												 , 'inner')
-		grid_num = df_grid.count()
-		grid_correct = (grid_num - df_grid_incorrect.count()) / grid_num
-		result["orgUnit.grid"] = (grid_correct, df_grid_incorrect)
-		
-		# ROR
-		df_ror_intern = df_affiliations.where(df_affiliations["affil_exploded.orgIDType"] == "ROR")
-		df_ror_incorrect = df_ror_intern.join(df_ror, (df_ror_intern["affil_exploded.orgID"] == df_ror["id"]) & \
-													  (df_ror_intern["affil_exploded.orgName"] != df_ror["name"]) \
-													  , 'inner')
-		ror_num = df_ror_intern.count()
-		ror_correct = (ror_num - df_ror_incorrect.count()) / ror_num
-		result["orgUnit.ror"] = (ror_correct, df_ror_incorrect)
+class Correctness(Metric):
 
-		# LEI
-		df_lei = spark.read.csv("data/LEI.csv", header=True)
-		df_lei_intern = df_affiliations.where(df_affiliations["affil_exploded.orgIDType"] == "LEI")
-		df_lei_incorrect = df_lei_intern.join(df_lei, (df_lei_intern["affil_exploded.orgID"] == df_lei["id"]) & \
-													  (df_lei_intern["affil_exploded.orgName"] != df_lei["name"]) \
-													  , 'inner')
-		lei_num = df_lei_intern.count()
-		lei_correct = (lei_num - df_lei_incorrect.count()) / lei_num
-		result["orgUnit.lei"] = (lei_correct, df_lei_incorrect)
+	# chinese, japanese, korean, cyrillic
+	INVALID_ALPHABET = r'.*[\u4e00-\u9FFF\u3040-\u30ff\uac00-\ud7a3а-яА-Я].*'
 
-		# FUNDREF
-		df_fundref = spark.read.csv("data/FUNDREF.csv", header=True)
-		df_fundref_intern = df_affiliations.where(df_affiliations["affil_exploded.orgIDType"] == "FUNDREF")
-		df_fundref_incorrect = df_fundref_intern.join(df_fundref, (df_fundref_intern["affil_exploded.orgID"] == df_fundref["uri"]) & \
-																  (df_fundref_intern["affil_exploded.orgName"] != df_fundref["primary_name_display"]) \
-																  , 'inner')
-		fundref_num = df_fundref_intern.count()
-		fundref_correct = (fundref_num - df_fundref_incorrect.count()) / fundref_num
-		result["orgUnit.fundref"] = (fundref_correct, df_fundref_incorrect)
+	COMMON = r'(^[ \t\r\n\*\-/]|[ \t\r\n\*\-/]$)(^[\.,’\(@])([\.\-\*]+)|([\+\?]{1})|(k\.a\.)|(n\.n\.)|(n/a)|("")(.*(<\w+>)|([ ]{2,}).*)'
 
-	
-		return result
+	ORCID_ID = r'[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X]'
 
+	# antipattern for persons.firstName, persons.lastName, persons.otherNames, persons.publishedName
+	NAMES = r'.*[\(\)/\t0-9]+.*'
 
-class CorrectSyntax(Metric):
-
+	# syntax pattern
 	CONFIG = {
 		"works": {
-			"bibtex": r'@[a-z]*[A-Z]*[\s]*\{[\S\s]*,[\S\s]*\}',
-			"orcid_id": r'[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X]',
-			"orcid_publication_id": r'[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X]_works_[0-9]*',
-			"date": r'[0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?',
-			"url": r'(http://|https://)[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}',
-		#	"doi": r'10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+',
-			"issn": r'\d{4}-\d{3}[\dxX]',
-			"isbn": r'([0-9X\-]{13}+)|([0-9X\-]{10}+)'
+			"bibtex":				{"pattern": r'@[a-z]*[A-Z]*[\s]*\{[\S\s]*,[\S\s]*\}'},
+			"orcid_id":				{"pattern": ORCID_ID},
+			"orcid_publication_id":	{"pattern": r'[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X]_works_[0-9]*'},
+			"date":					{"pattern": r'[1800-' + str(datetime.now().year) + '](-[0-9]{2}(-[0-9]{2})?)?'},
+			"url":					{"pattern": r'(http://|https://)[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}'},
+			"doi":					{"pattern": r'10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+'},
+		#	"issn":					{"pattern": r'\d{4}-\d{3}[\dxX]'},
+			"isbn":					{"pattern": r'([0-9X\-]{13}+)|([0-9X\-]{10}+)'},
+			"abstract":				{"pattern": r'([^\s]+ ){4}[^\s]+',									# min 5 words
+									 "antipattern": r'^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt]'},
+			"title":				{"antipattern": r'.*[\n\r\t].*'},
+			"subTitle":				{"antipattern": r'.*[\n\r\t].*'}
 		},
 		"persons": {
-			"orcid_id": r'[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X]',
-			"country": r'[A-Z]{2}'
+			"orcid_id":					{"pattern": ORCID_ID},
+			"country":					{"pattern": r'[A-Z]{2}'},
+			"affiliations.startYear":	{"pattern": r'(19[0-9][0-9])|(20[0-9][0-9])'},		# 1900-2099
+			"affiliations.endYear":		{"pattern": r'(19[0-9][0-9])|(20[0-9][0-9])'},
+			"firstName":				{"antipattern": NAMES},
+			"lastName":					{"antipattern": NAMES},
+			"publishedName":			{"antipattern": NAMES}
 		}
 	}
 	
-	CONFIG_ORG_ID = {
-		"GRID": r'grid\.[0-9]+\.[0-9]+',
-		"LEI": r'[0-9]{6}[A-Z|0-9]{12}[0-9]{2}',
-		"FUNDREF": r'(.*doi.org/)?10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+',
-		"RINGGOLD": r'\d{1,6}',
-		"ROR": r'((https://)?ror.org/)?[0-9|a-z]{9}'
-	}
-	
-	
-	YEAR = r'\d{4}'
 	
 	def _weights(self):
+	
+													#	works.bibtex									persons.firstName
+													#		works.orcid_id									persons.lastName
+													#			works.authors.orcid_id							persons.publishedName
+													#				works.orcid_publication_id						persons.orcid_id
+													#					works.date										persons.country
+													#						works.url										persons.affiliations.startYear
+													#							works.doi										persons.affiliations.endYear
+													#								works.issn										orgUnits.orgName
+													#									works.isbn
+													#										works.abstract
+													#											works.title
+													#												works.subTitle
 		return {
-			"works.bibtex": 1,
-			"works.orcid_id": 1,
-			"works.authors.orcid_id": 1,
-			"works.orcid_publication_id": 1,
-			"works.date": 1,
-			"works.url": 1,
-			"works.doi": 1,
-			"works.issn": 1,
-			"works.isbn": 1,
-			"persons.orcid_id": 1,
-			"persons.country": 1,
-			"persons.affiliations.startYear": 1,
-			"persons.affiliations.endYear": 1,
-			"persons.affiliations.orgID": 1,
+			"works.bibtex": 8,						#	1	0	0	0	1	1	1	2	2	0	0	2	0	0	0	0	2	2	2	2
+			"works.orcid_id": 31,					#	2	1	1	1	2	2	1	2	2	2	1	2	1	1	1	1	2	2	2	2
+			"works.authors.orcid_id": 30,			#	2	1	1	1	2	1	1	2	2	2	1	2	1	1	1	1	2	2	2	2
+			"works.orcid_publication_id": 29,		#	2	1	1	1	1	1	1	2	2	2	1	2	1	1	1	1	2	2	2	2
+			"works.date": 24,						#	1	0	0	1	1	0	1	2	2	1	1	2	1	1	1	1	2	2	2	2
+			"works.url": 26,						#	1	0	1	1	2	1	0	2	2	1	1	2	1	1	1	1	2	2	2	2
+			"works.doi": 32,						#	1	1	1	1	1	1	1	2	2	2	1	2	2	2	2	2	2	2	2	2
+			"works.issn": 7,						#	0	0	0	0	0	0	0	1	1	0	0	1	0	0	0	0	1	1	1	1
+			"works.isbn": 6,						#	0	0	0	0	0	0	0	0	1	0	0	1	0	0	0	0	1	1	1	1
+			"works.abstract": 23,					#	2	0	0	0	1	1	0	2	2	1	0	2	1	1	1	1	2	2	2	2
+			"works.title": 33,						#	2	1	1	1	1	1	1	2	2	2	1	2	2	2	2	2	2	2	2	2
+			"works.subTitle": 16,					#	0	0	0	0	0	0	0	1	1	0	0	1	1	1	1	2	2	2	2	2
+			"persons.firstName": 22,				#	2	1	1	1	1	1	0	2	2	1	0	1	1	0	0	0	2	2	2	2
+			"persons.lastName": 26,					#	2	1	1	1	1	1	0	2	2	1	0	1	2	1	1	1	2	2	2	2
+			"persons.publishedName": 26,			#	2	1	1	1	1	1	0	2	2	1	0	1	2	1	1	1	2	2	2	2
+			"persons.orcid_id": 25,					#	2	1	1	1	1	1	0	2	2	1	0	0	2	1	1	1	2	2	2	2
+			"persons.country": 6,					#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	1
+			"persons.affiliations.startYear": 5,	#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	0
+			"persons.affiliations.endYear": 5,		#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	0
+			"orgUnits.orgName": 8					#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	2	2	1
 		}
 
 
-	def _calc(self, df_persons, df_works, spark):
+	def _calc(self, df_persons, df_works, df_orgUnits, spark):
 		result = {}
 		
 		# standard fields
-		for entity, patterns in CorrectSyntax.CONFIG.items():
+		for entity, patterns in Correctness.CONFIG.items():
 			dataFrame = df_persons if ("persons" == entity) else df_works
-			for field, pattern in patterns.items():
-				df_notNull = dataFrame.where(dataFrame[field].isNotNull())
-				df_invalid = df_notNull.where(~df_notNull[field].rlike(pattern))
+			for field, config in patterns.items():
+				df_base = dataFrame
+				attr = field
 				
-				indicator = 1 - df_invalid.count() / df_notNull.count()
+				if "." in attr:
+					levels = attr.split(".")
+					df_base = df_base.withColumn("exploded_" + levels[0], explode(levels[0]))
+					levels[0] = "exploded_" + levels[0]
+					attr = ".".join(levels)
+				elif isinstance(df_base.schema[attr].dataType, ArrayType):
+					df_base = df_base.withColumn("exploded_" + attr, explode(attr))
+					attr = "exploded_" + attr
+			
+			
+				df_notNull = df_base.where(df_base[attr].isNotNull())
+				df_valid = df_notNull.where(~df_notNull[attr].rlike(Correctness.INVALID_ALPHABET) & \
+											~df_notNull[attr].rlike(Correctness.COMMON))
+				
+				if "pattern" in config:
+					df_valid = df_valid.where(df_valid[attr].rlike(config["pattern"]))
+					
+				if "antipattern" in config:
+					df_valid = df_valid.where(~df_valid[attr].rlike(config["antipattern"]))
+					
+				
+				df_invalid = df_notNull.subtract(df_valid)
+				indicator = df_valid.count() / df_notNull.count()
 				
 				result[entity + "." + field] = (indicator, df_invalid)
 		
-		
-		# persons.affiliations.orgID
-		df_affiliations = df_persons.withColumn("affil_exploded", explode("affiliations"))
-		indicator_sum = 0
-		df_invalid_all = None
-		for id_type, pattern in CorrectSyntax.CONFIG_ORG_ID.items():
-			
-			df_notNull = df_affiliations.where(id_type == df_affiliations["affil_exploded.orgIDType"])
-			df_invalid = df_notNull.where(~df_notNull["affil_exploded.orgID"].rlike(pattern))
-				
-			indicator = 1 - df_invalid.count() / df_notNull.count()
-			
-			
-			result["persons.affiliations.orgID."+id_type] = (indicator, df_invalid)
-		
-			indicator_sum += indicator
-			df_invalid_all = df_invalid_all.append(df_invalid) if df_invalid_all else df_invalid
-				
-		result["persons.affiliations.orgID"] = (indicator_sum / len(CorrectSyntax.CONFIG_ORG_ID), df_invalid_all)
-		
-		
-		# persons.affiliations.startYear
-		for field in ["startYear", "endYear"]:
-			df_year = df_affiliations.where(df_affiliations["affil_exploded." + field].isNotNull())
-			df_year_invalid = df_year.where(~df_year["affil_exploded." + field].rlike(CorrectSyntax.YEAR))
-			indicator = 1 - df_year_invalid.count() / df_year.count()
-			
-			result["persons.affiliations." + field] = (indicator, df_year_invalid)
-		
-		
-		
-		# works.authors.orcid_id
-		df_authors = df_works.where(df_works["authors"].isNotNull()) \
-							 .withColumn("authors_exploded", explode("authors"))
-							 
-		df_authors_invalid = df_authors.where(~df_authors["authors_exploded.orcid_id"].rlike(CorrectSyntax.CONFIG["persons"]["orcid_id"]))
-		
-		result["works.authors.orcid_id"] = (1 - df_authors_invalid.count() / df_authors.count(), df_authors_invalid)
-		
-		
 
-		
-		
+		# orgUnits.name
+		df_ror = spark.read.csv("data/ROR.csv", header=True)
+		df_lei = spark.read.csv("data/LEI.csv", header=True)
+		df_fundref = spark.read.csv("data/FUNDREF.csv", header=True)
+		sources = {
+			"GRID":		{"df": df_ror,		"id_field": "`external_ids.GRID.preferred`",	"name_field": "name"},
+			"ROR":		{"df": df_ror,		"id_field": "id",								"name_field": "name"},
+			"LEI":		{"df": df_lei,		"id_field": "id",								"name_field": "name"},
+			"FUNDREF":	{"df": df_fundref,	"id_field": "uri",								"name_field": "primary_name_display"}
+		}
+
+		indicator = 0
+		df_invalids = []
+		for id_type, config in sources.items():
+			df_notNull = df_orgUnits.where(df_orgUnits["type"] == id_type)
+			df_incorrect = df_notNull.join(config["df"], (df_notNull["id"] == config["df"][config["id_field"]]) & \
+														 (df_notNull["name"] != config["df"][config["name_field"]]) \
+														 , 'leftsemi')
+														 
+			df_invalids.append(df_incorrect)
+			notNull_num = df_notNull.count()
+			indicator += (notNull_num - df_incorrect.count()) / notNull_num
+
+		result["orgUnits.orgName"] = (indicator / len(sources), df_invalids)
+
 		return result
+		
+		
+		

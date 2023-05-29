@@ -32,16 +32,17 @@ class XMLHandler(xml.sax.ContentHandler):
 	def endElement(self, tag):
 		# save last read value
 		if self.reading:
-			# manage single and multi values
-			if not self.curPath in self.data:
-				self.data[self.curPath] = self.curValue
-			else:
-				if not isinstance(self.data[self.curPath], list):
-					self.data[self.curPath] = [self.data[self.curPath]]
+			if self.curValue:
+				# manage single and multi values
+				if not self.curPath in self.data:
+					self.data[self.curPath] = self.curValue
+				else:
+					if not isinstance(self.data[self.curPath], list):
+						self.data[self.curPath] = [self.data[self.curPath]]
 
-				self.data[self.curPath].append(self.curValue)
-			
-			self.curValue = ""
+					self.data[self.curPath].append(self.curValue)
+				
+				self.curValue = ""
 			self.reading = False
 			
 			

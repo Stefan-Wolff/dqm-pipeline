@@ -1,4 +1,4 @@
-from lib.metrics import Metric
+from lib.metrics import Metric, Aggregation
 from pyspark.sql.functions import length, array_contains, substring
 from datetime import datetime
 from pyspark.sql import Row
@@ -8,7 +8,7 @@ class MinLength(Metric):
 	def _weights(self):
 												#	works.title
 												#		works.journal_title
-												#			works.short_description
+												#			works.abstract
 												#				works.subTitle
 												#					persons.firstName
 												#						persons.lastName
@@ -17,7 +17,7 @@ class MinLength(Metric):
 		return {
 			"works.title": 14,					#	1	2	1	2	2	2	2	2
 			"works.journal_title": 6,			#	0	1	0	1	1	1	1	1
-			"works.short_description": 14,		#	1	2	1	2	2	2	2	2
+			"works.abstract": 14,		#	1	2	1	2	2	2	2	2
 			"works.subTitle": 9,				#	0	1	0	1	2	1	2	2	
 			"persons.firstName": 5,				#	0	1	0	0	1	1	1	1
 			"persons.lastName": 6,				#	0	1	0	1	1	1	1	1
@@ -25,7 +25,7 @@ class MinLength(Metric):
 			"persons.publishedName": 5			#	0	1	0	0	1	1	1	1
 		}
 
-	def _calc(self, df_persons, df_works, spark):
+	def _calc(self, df_persons, df_works, df_orgUnits, spark):
 		result = {}
 		
 		# works.title
@@ -38,10 +38,10 @@ class MinLength(Metric):
 		works_journal = df_works_journal.count() / df_works.where(df_works["journal_title"].isNotNull()).count()
 		result["works.journal_title"] = (works_journal, df_works.subtract(df_works_journal))
 		
-		# works.short_description
-		df_works_description = df_works.where(12 <= length(df_works["short_description"]))
-		works_description = df_works_description.count() / df_works.where(df_works["short_description"].isNotNull()).count()
-		result["works.short_description"] = (works_description, df_works.subtract(df_works_description))
+		# works.abstract
+		df_works_description = df_works.where(12 <= length(df_works["abstract"]))
+		works_description = df_works_description.count() / df_works.where(df_works["abstract"].isNotNull()).count()
+		result["works.abstract"] = (works_description, df_works.subtract(df_works_description))
 		
 		# works.subTitle
 		df_works_subTitle = df_works.where(6 <= length(df_works["subTitle"]))
@@ -77,7 +77,7 @@ class MinValue(Metric):
 			"works.date": 1
 		}
 
-	def _calc(self, df_persons, df_works, spark):
+	def _calc(self, df_persons, df_works, df_orgUnits, spark):
 		result = {}
 		date_num = df_works.where(df_works["date"].isNotNull()).count()
 		
@@ -99,35 +99,45 @@ class NotNull(Metric):
 												#				persons.lastName			works.journal_title
 												#					persons.orcid_id			works.orcid_id
 												#						persons.otherNames			works.orcid_publication_id
-												#							persons.publishedName		works.publicationID
-												#															works.short_description
-												#																works.subTitle
-												#																	works.title
-												#																		works.type
-												#																			works.url
+												#							persons.publishedName		works.doi
+												#															works.issn
+												#																works.isbn
+												#																	works.abstract
+												#																		works.subTitle
+												#																			works.title
+												#																				works.type
+												#																					works.url
+												#																						orgUnits.id
+												#																							orgUnits.type
+												#																								orgUnits.name
 		return {
-			"persons.affiliations": 11,			# 	1	2	0	0	0	1	2	0	2	0	1	0	0	1	0	1	0	0	0
-			"persons.country": 5,				#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	0	1	0	0	0
-			"persons.firstName": 20,			#	2	2	1	1	0	2	1	0	2	0	2	0	0	1	1	2	1	2	0
-			"persons.lastName": 21,				#	2	2	2	1	0	2	1	0	2	0	2	0	0	1	1	2	1	2	0
-			"persons.orcid_id": 35,				#	2	2	2	2	1	2	2	2	2	2	2	1	1	2	2	2	2	2	2
-			"persons.otherNames": 15,			#	1	2	0	0	0	1	1	0	1	0	2	0	0	0	0	2	1	2	2
-			"persons.publishedName": 17,		#	0	1	1	1	0	1	1	0	1	0	1	0	0	0	0	0	0	0	0
-			"works.authors": 28,				#	2	2	2	2	0	2	2	1	2	1	2	1	1	1	1	2	1	2	1
-			"works.bibtex": 8,					#	0	1	0	0	0	1	1	0	1	0	1	0	0	0	0	1	0	1	1
-			"works.date": 26,					#	2	2	2	2	0	2	2	1	2	1	2	0	0	0	1	2	1	2	2
-			"works.journal_title": 7,			#	2	1	0	0	0	0	1	0	1	0	1	0	0	0	0	1	0	0	0
-			"works.orcid_id": 35,				#	2	2	2	2	1	2	2	1	2	2	2	1	2	2	2	2	2	2	2
-			"works.orcid_publication_id": 25,	#	1	0	1	1	0	2	2	1	2	2	2	0	1	2	1	2	1	2	2
-			"works.publicationID": 25,			#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	1	2	1	2	2
-			"works.short_description": 26,		#	2	2	1	1	0	2	2	1	2	1	2	0	1	1	1	2	1	2	2
-			"works.subTitle": 7,				#	1	1	0	0	0	0	2	0	1	0	1	0	0	0	0	1	0	0	0
-			"works.title": 25,					#	2	2	1	1	0	1	2	1	2	1	2	0	1	1	1	2	1	2	2
-			"works.type": 13,					#	2	2	0	0	0	0	2	0	1	0	2	0	0	0	0	2	0	1	1
-			"works.url": 18						#	2	2	2	2	0	0	2	1	1	0	2	0	0	0	0	2	0	1	1
+			"persons.affiliations": 19,			# 	1	2	0	0	0	1	2	0	2	0	1	0	0	1	2	0	0	1	0	0	0	2	2	2
+			"persons.country": 10,				#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	2	1
+			"persons.firstName": 30,			#	2	2	1	1	0	2	1	0	2	0	2	0	0	1	2	2	1	2	1	2	0	2	2	2
+			"persons.lastName": 31,				#	2	2	2	1	0	2	1	0	2	0	2	0	0	1	2	2	1	2	1	2	0	2	2	2
+			"persons.orcid_id": 45,				#	2	2	2	2	1	2	2	2	2	2	2	1	1	2	2	2	2	2	2	2	2	2	2	2
+			"persons.otherNames": 24,			#	1	2	0	0	0	1	1	0	1	0	2	0	0	0	2	1	0	2	1	2	2	2	2	2
+			"persons.publishedName": 24,		#	0	1	1	1	0	1	1	0	1	0	1	0	0	0	2	1	0	0	0	0	0	1	2	1
+			"works.authors": 38,				#	2	2	2	2	0	2	2	1	2	1	2	1	1	1	2	2	1	2	1	2	1	2	2	2
+			"works.bibtex": 12,					#	0	1	0	0	0	1	1	0	1	0	1	0	0	0	1	0	0	1	0	1	1	1	1	1
+			"works.date": 36,					#	2	2	2	2	0	2	2	1	2	1	2	0	0	0	2	2	1	2	1	2	2	2	2	2
+			"works.journal_title": 11,			#	2	1	0	0	0	0	1	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	1	1
+			"works.orcid_id": 45,				#	2	2	2	2	1	2	2	1	2	2	2	1	2	2	2	2	2	2	2	2	2	2	2	2
+			"works.orcid_publication_id": 35,	#	1	0	1	1	0	2	2	1	2	2	2	0	1	2	2	2	1	2	1	2	2	2	2	2
+			"works.doi": 34,					#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	2	1	1	2	1	2	2	2	2	2
+			"works.issn": 32,					#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	1	0	1	2	1	2	2	2	2	2
+			"works.isbn": 33,					#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	1	1	1	2	1	2	2	2	2	2
+			"works.abstract": 36,				#	2	2	1	1	0	2	2	1	2	1	2	0	1	1	2	2	1	2	1	2	2	2	2	2
+			"works.subTitle": 12,				#	1	1	0	0	0	0	2	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	2	1
+			"works.title": 35,					#	2	2	1	1	0	1	2	1	2	1	2	0	1	1	2	2	1	2	1	2	2	2	2	2
+			"works.type": 18,					#	2	2	0	0	0	0	2	0	1	0	2	0	0	0	1	0	0	2	0	1	1	1	2	1
+			"works.url": 28,					#	2	2	2	2	0	0	2	1	1	0	2	0	0	0	2	2	0	2	0	1	1	2	2	2
+			"orgUnits.id": 12,					#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	2	0	0	1	0	1	0	1	2	1
+			"orgUnits.type": 3,					#	0	0	0	0	0	0	0	0	1	0	1	0	0	0	0	0	0	0	0	0	0	0	1	0
+			"orgUnits.name": 12					#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	2	0	0	1	0	1	0	1	2	1
 		}
 
-	def _calc(self, df_persons, df_works, spark):
+	def _calc(self, df_persons, df_works, df_orgUnits, spark):
 		result = {}
 		entities = {"persons": df_persons, "works": df_works}
 		
@@ -159,17 +169,17 @@ class MinPopulation(Metric):
 	COUNTRIES = ["BE", "BG", "DK", "DE", "EE", "FI", "FR", "GB", "GR", "IE", "IT", "HR", "LV", "LT", "LU", "MT", "NL", "AT", "PL", "PT", "RO", "SE", "SK", "SI", "ES", "CZ", "HU", "UK", "CY", "AL", "AD", "IS", "LI", "MC", "ME", "NO", "SM", "CH", "RS", "UA", "BY"]
 
 	def _weights(self):
-											#	works.publicationDate
+											#	works.date
 											#		works.type
 											#			works.country
 		return {
-			"works.publicationDate": 5,		#	1	2	2
+			"works.date": 5,				#	1	2	2
 			"works.type": 1,				#	0	1	0
 			"works.country": 3				#	0	2	1
 		}
 
 
-	def _calc(self, df_persons, df_works, spark):
+	def _calc(self, df_persons, df_works, df_orgUnits, spark):
 		result = {}
 		
 		# publicaiton year: 2000 - current
@@ -177,7 +187,7 @@ class MinPopulation(Metric):
 		df_years = spark.createDataFrame([Row(str(y)) for y in range(2000, current_year + 1)], ["year"])
 		df_years_missing = df_years.join(df_works, df_years["year"] == substring(df_works["date"], 0, 4), "leftanti")
 		year_population = 1 - df_years_missing.count() / (current_year + 1 - 2000)
-		result["works.publicationDate"] = (year_population, df_years_missing)
+		result["works.date"] = (year_population, df_years_missing)
 		
 		# publication types
 		df_types = spark.createDataFrame([Row(t) for t in MinPopulation.TYPES], ["type"])
@@ -205,14 +215,13 @@ class MinObject(Metric):
 			"persons": 1		#	0	1
 		}
 
-	def _calc(self, df_persons, df_works, spark):
+	def _calc(self, df_persons, df_works, df_orgUnits, spark):
 		result = {}
 		
 		# works
 		works_num = df_works.count()
 		df_works_valid = df_works.where(df_works["title"].isNotNull() & \
-										(df_works["url"].isNotNull() | \
-										df_works["publicationID"].isNotNull() & array_contains("publicationID.type", "doi")))
+										(df_works["url"].isNotNull() | df_works["doi"].isNotNull()))
 		works_valid = df_works_valid.count() / works_num
 		result["works"] = (works_valid, df_works.subtract(df_works_valid))
 
@@ -228,13 +237,15 @@ class MinObject(Metric):
 		return result
 
 		
-class Completeness(Metric):
+class Completeness(Aggregation):
+
+	def _weights(self):
 									#	MinLength
 									#		MinValue
 									#			NotNull
 									#				MinPopulation
 									#					MinObject
-	WEIGHTS = {
+		return {
 			"MinLength": 5,			#	1	2	0	2	0
 			"MinValue": 2,			#	0	1	0	1	0
 			"NotNull": 7,			#	2	2	1	2	0
@@ -243,39 +254,16 @@ class Completeness(Metric):
 		}
 
 
-	def _weights(self):
-		return Completeness.WEIGHTS
-
-
-	def __formateResult(self, calc_result):
-		result = dict(calc_result)
-		weights = Completeness.WEIGHTS
-		sum_indicators = 0
-		sum_weights = 0
-		
-		for local_key in weights.keys():
-			indicator = calc_result[local_key]
-			sum_indicators += indicator * weights[local_key]
-			sum_weights += weights[local_key]
-			
-			del calc_result[local_key]
-			result[self.getName() + "." + local_key] = round(indicator, 3)
-		
-		result[self.getName()] = round(sum_indicators / sum_weights, 3)
-		
-		return result
-
-
-	def calc(self, df_persons, df_works, spark, sample_num):
+	def calc(self, df_persons, df_works, df_orgUnits, spark, sample_num):
 		result = {}
 		
-		result.update(MinLength().calc(df_persons, df_works, spark, sample_num))
-		result.update(MinValue().calc(df_persons, df_works, spark, sample_num))
-		result.update(NotNull().calc(df_persons, df_works, spark, sample_num))
-		result.update(MinPopulation().calc(df_persons, df_works, spark, sample_num))
-		result.update(MinObject().calc(df_persons, df_works, spark, sample_num))
+		result.update(MinLength().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
+		result.update(MinValue().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
+		result.update(NotNull().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
+		result.update(MinPopulation().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
+		result.update(MinObject().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
 		
 		
-		return self.__formateResult(result)
+		return self._formateResult(result)
 		
 		

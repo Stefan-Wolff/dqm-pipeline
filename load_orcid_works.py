@@ -38,7 +38,7 @@ SEARCH_FOR = {
 	"/work:work/common:external-ids/common:external-id/common:external-id-value": {"elementName": None},
 	"/work:work/common:external-ids/common:external-id/common:external-id-normalized": {"elementName": None},
 	"doi": {"elementName": "doi"},																		# based on external-id
-	"isbn": {"elementName": "isbn"},																		# based on external-id
+	"issn": {"elementName": "issn"},																		# based on external-id
 	"isbn": {"elementName": "isbn"},																		# based on external-id
 	"/work:work/work:contributors/work:contributor/work:credit-name": {
 		"elementName": "publishedName",
@@ -135,7 +135,7 @@ def select_id(author, publ):
 	if "orcid_id" in author:
 		return author["orcid_id"]
 	else:
-		return publ["orcid_id"] + "_" + author["publishedName"]
+		return publ["orcid_publication_id"] + "_" + author["publishedName"]
 	
 	
 
