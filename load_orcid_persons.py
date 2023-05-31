@@ -15,9 +15,8 @@ logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s",
 SOURCE_URL = "https://orcid.figshare.com/ndownloader/files/37635374"
 
 TMP_DIR = "data/tmp/"
-OUT_DIR = "data/ORCID_persons/"
-ORG_FILE = "data/orgUnits.json.gz"
-RESULT_NUM = 32
+OUT_FILE = "data/ORCID_persons.jsonl.gz"
+ORG_FILE = "data/ORCID_orgUnits.jsonl.gz"
 
 SEARCH_FOR = {
 	"/record:record/person:person/person:name/personal-details:given-names": {"elementName": "firstName"},
@@ -83,61 +82,40 @@ def run():
 	localName = SOURCE_URL.strip().split("/")[-1]
 	fileName = localName + ".gz"
 
-	os.system("mkdir -p " + OUT_DIR)
 	os.system("mkdir -p " + TMP_DIR)
 	#os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
 
 	count = 0
 	tar = tarfile.open(TMP_DIR + fileName)
 	parser = lib.xml_parse.Parser()
-	
-	member_num = 0
-	for member in tar:
-		member_num += 1
-		
-	max_per_file = int(member_num / RESULT_NUM) + 1
-	current_members = 0
-	file_index = 0
-	outPerson = None
 
-	with gzip.open(ORG_FILE, 'wt', encoding='utf-8') as outOrg:
-		for member in tar:
-			if member.isfile():
-				if 0 == current_members:
-					if outPerson:
-						outPerson.close()
+	with gzip.open(OUT_FILE, 'wt', encoding='utf-8') as outPerson:
+		with gzip.open(ORG_FILE, 'wt', encoding='utf-8') as outOrg:
+			for member in tar:
+				if member.isfile():
+					handler = lib.xml_parse.XMLHandler(SEARCH_FOR)
+					person = parser.parse(handler, tar.extractfile(member))
 					
-					current_outName = OUT_DIR + localName + "_" + str(file_index) + ".jsonl.gz"
-					outPerson = gzip.open(current_outName, 'wt', encoding='utf-8')
-					file_index += 1
-			
-				handler = lib.xml_parse.XMLHandler(SEARCH_FOR)
-				person = parser.parse(handler, tar.extractfile(member))
-				
-				member_fileName = member.name.split("/")[-1]
-				person["orcid_id"] = member_fileName.split(".")[0]
+					member_fileName = member.name.split("/")[-1]
+					person["id"] = member_fileName.split(".")[0]
 
-				orgUnit = isolate_orgUnit(person)
-				if orgUnit:
-					json.dump(orgUnit, outOrg)
-					outOrg.write('\n')
-
-				if "affiliations" in person:
-					affils = person["affiliations"]
-					for affil in affils:
-						orgUnit = isolate_orgUnit(affil)
+					orgUnit = isolate_orgUnit(person)
+					if orgUnit:
 						json.dump(orgUnit, outOrg)
 						outOrg.write('\n')
 
-				json.dump(person, outPerson)
-				outPerson.write('\n')
-				
-				count += 1
-				current_members += 1
-				if current_members == max_per_file:
-					current_members = 0
+					if "affiliations" in person:
+						affils = person["affiliations"]
+						for affil in affils:
+							orgUnit = isolate_orgUnit(affil)
+							json.dump(orgUnit, outOrg)
+							outOrg.write('\n')
 
-		outPerson.close()
+					json.dump(person, outPerson)
+					outPerson.write('\n')
+					
+					count += 1
+
 	
 	#os.system("rm " + TMP_DIR + fileName)
 	

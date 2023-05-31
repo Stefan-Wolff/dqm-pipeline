@@ -4,17 +4,11 @@
 
 import os
 import sys
-import logging
 import json
 import tarfile
 import gzip
 import lib.xml_parse
-from concurrent.futures import ProcessPoolExecutor
-
-
-logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s", 
-					filename	=	__file__.split(".")[0] + ".log",
-					level		=	logging.INFO)
+import multiprocessing 
 
 
 SOURCE_FILES = "data/orcid_works_2022.lsv"
@@ -41,7 +35,7 @@ SEARCH_FOR = {
 	"issn": {"elementName": "issn"},																		# based on external-id
 	"isbn": {"elementName": "isbn"},																		# based on external-id
 	"/work:work/work:contributors/work:contributor/work:credit-name": {
-		"elementName": "publishedName",
+		"elementName": "otherNames",
 		"groupName": "authors",
 		"groupPath": "/work:work/work:contributors/work:contributor"
 	},
@@ -51,7 +45,7 @@ SEARCH_FOR = {
 		"groupPath": "/work:work/work:contributors/work:contributor"
 	},
 	"/work:work/work:contributors/work:contributor/common:contributor-orcid/common:path": {
-		"elementName": "orcid_id",
+		"elementName": "id",
 		"groupName": "authors",
 		"groupPath": "/work:work/work:contributors/work:contributor"
 	}
@@ -131,28 +125,20 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 			
 			
 ### functions
-def select_id(author, publ):
-	if "orcid_id" in author:
-		return author["orcid_id"]
-	else:
-		return publ["orcid_publication_id"] + "_" + author["publishedName"]
-	
-	
-
-def process_source(url, toDownload):
-	fileName_local = url.strip().split("/")[-1]
+def process_source(config):
+	fileName_local = config["url"].strip().split("/")[-1]
 	fileName = fileName_local + ".gz"
 	
 	count = 0
 	
-	logging.info("\t process source: " + fileName)
+	print("\t process source: " + fileName)
 	
 	parser = lib.xml_parse.Parser()
 	
-	if toDownload:
+	if config["toDownload"]:
 		os.system("mkdir -p " + OUT_DIR)
 		os.system("mkdir -p " + OUT_DIR_RAW)
-		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + url)
+		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + config["url"])
 	
 	with gzip.open(OUT_DIR + "/works_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outWorks:
 		with gzip.open(OUT_DIR + "/authors_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outAuthors:
@@ -163,15 +149,18 @@ def process_source(url, toDownload):
 						publ = parser.parse(handler, tar.extractfile(member))
 						
 						fileName = member.name.split("/")[-1]
-						publ["orcid_publication_id"] = fileName.split(".")[0]
+						publ["orcid_publication_id"] = fileName.split(".")[0].split("_works_")[-1]
 						publ["orcid_id"] = fileName.split("_")[0]
 						
 						if "authors" in publ:
 							authors = publ["authors"]
+							i = 0
 							for author in authors:
-								author["id"] = select_id(author, publ)
+								if not "id" in author:
+									author["id"] = publ["orcid_publication_id"] + "_" + str(i)
 								json.dump(author, outAuthors)
 								outAuthors.write('\n')
+								i += 1
 							
 							publ["authors"] = [author["id"] for author in authors]
 						
@@ -180,27 +169,33 @@ def process_source(url, toDownload):
 
 						count += 1
 					
-	logging.info("\t .. source " + fileName + " done: " + str(count) + " records")
+	print("\t .. source " + fileName + " done: " + str(count) + " records")
 					
 	return count
 
 
 ### main
 def run(toDownload):
-	logging.info("start transforming publications ..")
+	print("start transforming publications ..")
 	
 	count = 0
+	queue = []
 	with open(SOURCE_FILES, 'r', newline='') as inFile:
 		for url in inFile:
-			count += process_source(url, toDownload)
+			queue.append({"url": url, "toDownload": toDownload})
 
-	
-	logging.info(str(count) + " publications transformed")
+
+	with multiprocessing.Pool(len(queue)) as pool:
+		results = pool.map(process_source, queue)
+
+
+	result_sum = 0
+	for num in results:
+		result_sum += num
+		
+	print(str(result_sum) + " publications transformed")
 	
 
 ### entry
 if "__main__" == __name__:
-	try:
-		run(False)
-	except:
-		logging.exception(sys.exc_info()[0])
+	run(False)

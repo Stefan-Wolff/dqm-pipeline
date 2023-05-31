@@ -21,11 +21,11 @@ class Correctness(Metric):
 		"works": {
 			"bibtex":				{"pattern": r'@[a-z]*[A-Z]*[\s]*\{[\S\s]*,[\S\s]*\}'},
 			"orcid_id":				{"pattern": ORCID_ID},
-			"orcid_publication_id":	{"pattern": r'[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X]_works_[0-9]*'},
+			"orcid_publication_id":	{"pattern": r'[0-9]+'},
 			"date":					{"pattern": r'[1800-' + str(datetime.now().year) + '](-[0-9]{2}(-[0-9]{2})?)?'},
 			"url":					{"pattern": r'(http://|https://)[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}'},
 			"doi":					{"pattern": r'10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+'},
-		#	"issn":					{"pattern": r'\d{4}-\d{3}[\dxX]'},
+			"issn":					{"pattern": r'(\d{3}-\d-\d{4}-\d{4}-\d)|(\d{4}-\d{3}[\dxX])'},
 			"isbn":					{"pattern": r'([0-9X\-]{13}+)|([0-9X\-]{10}+)'},
 			"abstract":				{"pattern": r'([^\s]+ ){4}[^\s]+',									# min 5 words
 									 "antipattern": r'^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt]'},
@@ -33,7 +33,7 @@ class Correctness(Metric):
 			"subTitle":				{"antipattern": r'.*[\n\r\t].*'}
 		},
 		"persons": {
-			"orcid_id":					{"pattern": ORCID_ID},
+			"id":					{"pattern": r'[0-9X\-_]+'},
 			"country":					{"pattern": r'[A-Z]{2}'},
 			"affiliations.startYear":	{"pattern": r'(19[0-9][0-9])|(20[0-9][0-9])'},		# 1900-2099
 			"affiliations.endYear":		{"pattern": r'(19[0-9][0-9])|(20[0-9][0-9])'},
@@ -45,45 +45,46 @@ class Correctness(Metric):
 	
 	
 	def _weights(self):
-	
-													#	works.bibtex									persons.firstName
-													#		works.orcid_id									persons.lastName
-													#			works.authors.orcid_id							persons.publishedName
-													#				works.orcid_publication_id						persons.orcid_id
-													#					works.date										persons.country
-													#						works.url										persons.affiliations.startYear
-													#							works.doi										persons.affiliations.endYear
-													#								works.issn										orgUnits.orgName
-													#									works.isbn
-													#										works.abstract
-													#											works.title
-													#												works.subTitle
+													#	works.bibtex								persons.firstName
+													#		works.orcid_id								persons.lastName
+													#			works.orcid_publication_id					persons.publishedName
+													#				works.date									persons.id
+													#					works.url									persons.country
+													#						works.doi									persons.affiliations.startYear
+													#							works.issn									persons.affiliations.endYear
+													#								works.isbn									orgUnits.orgName
+													#									works.abstract
+													#										works.title
+													#											works.subTitle
 		return {
-			"works.bibtex": 8,						#	1	0	0	0	1	1	1	2	2	0	0	2	0	0	0	0	2	2	2	2
-			"works.orcid_id": 31,					#	2	1	1	1	2	2	1	2	2	2	1	2	1	1	1	1	2	2	2	2
-			"works.authors.orcid_id": 30,			#	2	1	1	1	2	1	1	2	2	2	1	2	1	1	1	1	2	2	2	2
-			"works.orcid_publication_id": 29,		#	2	1	1	1	1	1	1	2	2	2	1	2	1	1	1	1	2	2	2	2
-			"works.date": 24,						#	1	0	0	1	1	0	1	2	2	1	1	2	1	1	1	1	2	2	2	2
-			"works.url": 26,						#	1	0	1	1	2	1	0	2	2	1	1	2	1	1	1	1	2	2	2	2
-			"works.doi": 32,						#	1	1	1	1	1	1	1	2	2	2	1	2	2	2	2	2	2	2	2	2
-			"works.issn": 7,						#	0	0	0	0	0	0	0	1	1	0	0	1	0	0	0	0	1	1	1	1
-			"works.isbn": 6,						#	0	0	0	0	0	0	0	0	1	0	0	1	0	0	0	0	1	1	1	1
-			"works.abstract": 23,					#	2	0	0	0	1	1	0	2	2	1	0	2	1	1	1	1	2	2	2	2
-			"works.title": 33,						#	2	1	1	1	1	1	1	2	2	2	1	2	2	2	2	2	2	2	2	2
-			"works.subTitle": 16,					#	0	0	0	0	0	0	0	1	1	0	0	1	1	1	1	2	2	2	2	2
-			"persons.firstName": 22,				#	2	1	1	1	1	1	0	2	2	1	0	1	1	0	0	0	2	2	2	2
-			"persons.lastName": 26,					#	2	1	1	1	1	1	0	2	2	1	0	1	2	1	1	1	2	2	2	2
-			"persons.publishedName": 26,			#	2	1	1	1	1	1	0	2	2	1	0	1	2	1	1	1	2	2	2	2
-			"persons.orcid_id": 25,					#	2	1	1	1	1	1	0	2	2	1	0	0	2	1	1	1	2	2	2	2
-			"persons.country": 6,					#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	1
-			"persons.affiliations.startYear": 5,	#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	0
-			"persons.affiliations.endYear": 5,		#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	0
-			"orgUnits.orgName": 8					#	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	2	2	1
+			"works.bibtex": 8,						#	1	0	0	1	1	1	2	2	0	0	2	0	0	0	0	2	2	2	2
+			"works.orcid_id": 30,					#	2	1	1	2	2	1	2	2	2	1	2	1	1	1	1	2	2	2	2
+			"works.orcid_publication_id": 28,		#	2	1	1	1	1	1	2	2	2	1	2	1	1	1	1	2	2	2	2
+			"works.date": 24,						#	1	0	1	1	0	1	2	2	1	1	2	1	1	1	1	2	2	2	2
+			"works.url": 25,						#	1	0	1	2	1	0	2	2	1	1	2	1	1	1	1	2	2	2	2
+			"works.doi": 31,						#	1	1	1	1	1	1	2	2	2	1	2	2	2	2	2	2	2	2	2
+			"works.issn": 7,						#	0	0	0	0	0	0	1	1	0	0	1	0	0	0	0	1	1	1	1
+			"works.isbn": 6,						#	0	0	0	0	0	0	0	1	0	0	1	0	0	0	0	1	1	1	1
+			"works.abstract": 23,					#	2	0	0	1	1	0	2	2	1	0	2	1	1	1	1	2	2	2	2
+			"works.title": 32,						#	2	1	1	1	1	1	2	2	2	1	2	2	2	2	2	2	2	2	2
+			"works.subTitle": 16,					#	0	0	0	0	0	0	1	1	0	0	1	1	1	1	2	2	2	2	2
+			"persons.firstName": 21,				#	2	1	1	1	1	0	2	2	1	0	1	1	0	0	0	2	2	2	2
+			"persons.lastName": 25,					#	2	1	1	1	1	0	2	2	1	0	1	2	1	1	1	2	2	2	2
+			"persons.publishedName": 25,			#	2	1	1	1	1	0	2	2	1	0	1	2	1	1	1	2	2	2	2
+			"persons.id": 24,					#	2	1	1	1	1	0	2	2	1	0	0	2	1	1	1	2	2	2	2
+			"persons.country": 6,					#	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	1
+			"persons.affiliations.startYear": 5,	#	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	0
+			"persons.affiliations.endYear": 5,		#	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	1	1	0
+			"orgUnits.orgName": 8					#	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	1	2	2	1
 		}
 
 
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
+		
+		df_persons = dataFrames["persons"]
+		df_works = dataFrames["works"]
+		df_orgUnits = dataFrames["orgUnits"]
 		
 		# standard fields
 		for entity, patterns in Correctness.CONFIG.items():

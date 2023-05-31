@@ -8,25 +8,24 @@ class UniqueValue(Metric):
 												#	works.bibtex
 												#		works.orcid_publication_id
 												#			works.doi
-												#				persons.orcid_id
+												#				persons.id
 												#					orgUnits.orgID
 		return {
 			"works.bibtex": 1,					#	1	0	0	0	0
 			"works.orcid_publication_id": 8,	#	2	1	2	1	2
 			"works.doi": 5,						#	2	1	1	0	1
-			"persons.orcid_id": 8,				#	2	1	2	1	2
+			"persons.id": 8,					#	2	1	2	1	2
 			"orgUnits.id": 4					#	2	0	1	0	1
 		}
 		
 	
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
 		
 		for key in self._weights().keys():
-			for prefix, df in {"persons.": df_persons, "works.": df_works, "orgUnits.": df_orgUnits}.items():
-				if key.startswith(prefix):
-					dataFrame = df
-					field = key.replace(prefix, "", 1)
+			for entity, dataFrame in dataFrames.items():
+				if key.startswith(entity):
+					field = key.replace(entity + ".", "", 1)
 
 					df_notNull = dataFrame.where(dataFrame[field].isNotNull()).select(field)
 					df_valid = df_notNull.distinct()
@@ -51,8 +50,11 @@ class NoContradict(Metric):
 			"works.isbnOnlyBook": 3						#	1	1	1
 		}
 		
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
+		
+		df_persons = dataFrames["persons"]
+		df_works = dataFrames["works"]
 		
 		# startYear <= endYear
 		df_affils = df_persons.withColumn("affil_exploded", explode("affiliations"))
@@ -94,10 +96,10 @@ class Consistency(Aggregation):
 		
 		
 	
-	def calc(self, df_persons, df_works, df_orgUnits, spark, sample_num):
+	def calc(self, dataFrames, spark, sample_num):
 		result = {}
 		
-		result.update(UniqueValue().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
-		result.update(NoContradict().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
+		result.update(UniqueValue().calc(dataFrames, spark, sample_num))
+		result.update(NoContradict().calc(dataFrames, spark, sample_num))
 		
 		return result

@@ -25,8 +25,11 @@ class MinLength(Metric):
 			"persons.publishedName": 5			#	0	1	0	0	1	1	1	1
 		}
 
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
+		
+		df_persons = dataFrames["persons"]
+		df_works = dataFrames["works"]
 		
 		# works.title
 		df_works_title = df_works.where(6 <= length(df_works["title"]))
@@ -77,8 +80,11 @@ class MinValue(Metric):
 			"works.date": 1
 		}
 
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
+		
+		df_works = dataFrames["works"]
+		
 		date_num = df_works.where(df_works["date"].isNotNull()).count()
 		
 		# [YYYY-MM-DD]
@@ -93,55 +99,58 @@ class MinValue(Metric):
 
 class NotNull(Metric):
 	def _weights(self):
-												#	persons.affiliations		works.authors
-												#		persons.country				works.bibtex
-												#			persons.firstName			works.date
-												#				persons.lastName			works.journal_title
-												#					persons.orcid_id			works.orcid_id
-												#						persons.otherNames			works.orcid_publication_id
-												#							persons.publishedName		works.doi
-												#															works.issn
-												#																works.isbn
-												#																	works.abstract
-												#																		works.subTitle
-												#																			works.title
-												#																				works.type
-												#																					works.url
-												#																						orgUnits.id
-												#																							orgUnits.type
-												#																								orgUnits.name
+												#	persons.affiliations			works.authors
+												#		persons.country					works.bibtex
+												#			persons.firstName				works.date
+												#				persons.lastName				works.journal_title
+												#					persons.author_id				works.orcid_id
+												#						persons.id						works.orcid_publication_id
+												#							persons.otherNames				works.doi
+												#								persons.publishedName			works.issn
+												#																	works.isbn
+												#																		works.abstract
+												#																			works.subTitle
+												#																				works.title
+												#																					works.type
+												#																						works.url
+												#																							orgUnits.id
+												#																								orgUnits.type
+												#																									orgUnits.name
+												#																									
 		return {
-			"persons.affiliations": 19,			# 	1	2	0	0	0	1	2	0	2	0	1	0	0	1	2	0	0	1	0	0	0	2	2	2
-			"persons.country": 10,				#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	2	1
-			"persons.firstName": 30,			#	2	2	1	1	0	2	1	0	2	0	2	0	0	1	2	2	1	2	1	2	0	2	2	2
-			"persons.lastName": 31,				#	2	2	2	1	0	2	1	0	2	0	2	0	0	1	2	2	1	2	1	2	0	2	2	2
-			"persons.orcid_id": 45,				#	2	2	2	2	1	2	2	2	2	2	2	1	1	2	2	2	2	2	2	2	2	2	2	2
-			"persons.otherNames": 24,			#	1	2	0	0	0	1	1	0	1	0	2	0	0	0	2	1	0	2	1	2	2	2	2	2
-			"persons.publishedName": 24,		#	0	1	1	1	0	1	1	0	1	0	1	0	0	0	2	1	0	0	0	0	0	1	2	1
-			"works.authors": 38,				#	2	2	2	2	0	2	2	1	2	1	2	1	1	1	2	2	1	2	1	2	1	2	2	2
-			"works.bibtex": 12,					#	0	1	0	0	0	1	1	0	1	0	1	0	0	0	1	0	0	1	0	1	1	1	1	1
-			"works.date": 36,					#	2	2	2	2	0	2	2	1	2	1	2	0	0	0	2	2	1	2	1	2	2	2	2	2
-			"works.journal_title": 11,			#	2	1	0	0	0	0	1	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	1	1
-			"works.orcid_id": 45,				#	2	2	2	2	1	2	2	1	2	2	2	1	2	2	2	2	2	2	2	2	2	2	2	2
-			"works.orcid_publication_id": 35,	#	1	0	1	1	0	2	2	1	2	2	2	0	1	2	2	2	1	2	1	2	2	2	2	2
-			"works.doi": 34,					#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	2	1	1	2	1	2	2	2	2	2
-			"works.issn": 32,					#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	1	0	1	2	1	2	2	2	2	2
-			"works.isbn": 33,					#	1	2	1	1	0	2	2	1	2	2	2	0	0	1	1	1	1	2	1	2	2	2	2	2
-			"works.abstract": 36,				#	2	2	1	1	0	2	2	1	2	1	2	0	1	1	2	2	1	2	1	2	2	2	2	2
-			"works.subTitle": 12,				#	1	1	0	0	0	0	2	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	2	1
-			"works.title": 35,					#	2	2	1	1	0	1	2	1	2	1	2	0	1	1	2	2	1	2	1	2	2	2	2	2
-			"works.type": 18,					#	2	2	0	0	0	0	2	0	1	0	2	0	0	0	1	0	0	2	0	1	1	1	2	1
-			"works.url": 28,					#	2	2	2	2	0	0	2	1	1	0	2	0	0	0	2	2	0	2	0	1	1	2	2	2
-			"orgUnits.id": 12,					#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	2	0	0	1	0	1	0	1	2	1
-			"orgUnits.type": 3,					#	0	0	0	0	0	0	0	0	1	0	1	0	0	0	0	0	0	0	0	0	0	0	1	0
-			"orgUnits.name": 12					#	0	1	0	0	0	0	1	0	1	0	1	0	0	0	2	0	0	1	0	1	0	1	2	1
+			"persons.affiliations": 19,			# 	1	2	0	0	0	0	1	2	0	2	0	1	0	0	1	2	0	0	1	0	0	0	2	2	2
+			"persons.country": 10,				#	0	1	0	0	0	0	0	1	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	2	1
+			"persons.firstName": 30,			#	2	2	1	1	0	0	2	1	0	2	0	2	0	0	1	2	2	1	2	1	2	0	2	2	2
+			"persons.lastName": 31,				#	2	2	2	1	0	0	2	1	0	2	0	2	0	0	1	2	2	1	2	1	2	0	2	2	2
+			"persons.author_id": 45,			#	2	2	2	2	1	1	2	2	2	2	2	2	1	1	2	2	2	2	2	2	2	2	2	2	2
+			"persons.id": 45,					#	2	2	2	2	1	1	2	2	2	2	2	2	1	1	2	2	2	2	2	2	2	2	2	2	2
+			"persons.otherNames": 24,			#	1	2	0	0	0	0	1	1	0	1	0	2	0	0	0	2	1	0	2	1	2	2	2	2	2
+			"persons.publishedName": 24,		#	0	1	1	1	0	0	1	1	0	1	0	1	0	0	0	2	1	0	0	0	0	0	1	2	1
+			"works.authors": 38,				#	2	2	2	2	0	0	2	2	1	2	1	2	1	1	1	2	2	1	2	1	2	1	2	2	2
+			"works.bibtex": 12,					#	0	1	0	0	0	0	1	1	0	1	0	1	0	0	0	1	0	0	1	0	1	1	1	1	1
+			"works.date": 36,					#	2	2	2	2	0	0	2	2	1	2	1	2	0	0	0	2	2	1	2	1	2	2	2	2	2
+			"works.journal_title": 11,			#	2	1	0	0	0	0	0	1	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	1	1
+			"works.orcid_id": 45,				#	2	2	2	2	1	1	2	2	1	2	2	2	1	2	2	2	2	2	2	2	2	2	2	2	2
+			"works.orcid_publication_id": 35,	#	1	0	1	1	0	0	2	2	1	2	2	2	0	1	2	2	2	1	2	1	2	2	2	2	2
+			"works.doi": 34,					#	1	2	1	1	0	0	2	2	1	2	2	2	0	0	1	2	1	1	2	1	2	2	2	2	2
+			"works.issn": 32,					#	1	2	1	1	0	0	2	2	1	2	2	2	0	0	1	1	0	1	2	1	2	2	2	2	2
+			"works.isbn": 33,					#	1	2	1	1	0	0	2	2	1	2	2	2	0	0	1	1	1	1	2	1	2	2	2	2	2
+			"works.abstract": 36,				#	2	2	1	1	0	0	2	2	1	2	1	2	0	1	1	2	2	1	2	1	2	2	2	2	2
+			"works.subTitle": 12,				#	1	1	0	0	0	0	0	2	0	1	0	1	0	0	0	1	0	0	1	0	0	0	1	2	1
+			"works.title": 35,					#	2	2	1	1	0	0	1	2	1	2	1	2	0	1	1	2	2	1	2	1	2	2	2	2	2
+			"works.type": 18,					#	2	2	0	0	0	0	0	2	0	1	0	2	0	0	0	1	0	0	2	0	1	1	1	2	1
+			"works.url": 28,					#	2	2	2	2	0	0	0	2	1	1	0	2	0	0	0	2	2	0	2	0	1	1	2	2	2
+			"orgUnits.id": 12,					#	0	1	0	0	0	0	0	1	0	1	0	1	0	0	0	2	0	0	1	0	1	0	1	2	1
+			"orgUnits.type": 3,					#	0	0	0	0	0	0	0	0	0	1	0	1	0	0	0	0	0	0	0	0	0	0	0	1	0
+			"orgUnits.name": 12					#	0	1	0	0	0	0	0	1	0	1	0	1	0	0	0	2	0	0	1	0	1	0	1	2	1
 		}
 
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
-		entities = {"persons": df_persons, "works": df_works}
+		entities = set([e.split(".")[0] for e in self._weights().keys()])
 		
-		for entity, dataFrame in entities.items():
+		for entity in entities:
+			dataFrame = dataFrames[entity]
 			row_num = dataFrame.count()
 			
 			for col in dataFrame.columns:
@@ -179,10 +188,13 @@ class MinPopulation(Metric):
 		}
 
 
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
 		
-		# publicaiton year: 2000 - current
+		df_persons = dataFrames["persons"]
+		df_works = dataFrames["works"]
+		
+		# publication year: 2000 - current
 		current_year = datetime.now().year
 		df_years = spark.createDataFrame([Row(str(y)) for y in range(2000, current_year + 1)], ["year"])
 		df_years_missing = df_years.join(df_works, df_years["year"] == substring(df_works["date"], 0, 4), "leftanti")
@@ -215,8 +227,11 @@ class MinObject(Metric):
 			"persons": 1		#	0	1
 		}
 
-	def _calc(self, df_persons, df_works, df_orgUnits, spark):
+	def _calc(self, dataFrames, spark):
 		result = {}
+		
+		df_persons = dataFrames["persons"]
+		df_works = dataFrames["works"]
 		
 		# works
 		works_num = df_works.count()
@@ -227,7 +242,7 @@ class MinObject(Metric):
 
 		# persons
 		persons_num = df_persons.count()
-		df_persons_valid = df_persons.where(df_persons["orcid_id"].isNotNull() & \
+		df_persons_valid = df_persons.where(df_persons["id"].isNotNull() & \
 												((df_persons["firstName"].isNotNull() & df_persons["lastName"].isNotNull()) | \
 												df_persons["publishedName"].isNotNull()))
 		persons_valid = df_persons_valid.count() / persons_num
@@ -254,14 +269,14 @@ class Completeness(Aggregation):
 		}
 
 
-	def calc(self, df_persons, df_works, df_orgUnits, spark, sample_num):
+	def calc(self, dataFrames, spark, sample_num):
 		result = {}
 		
-		result.update(MinLength().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
-		result.update(MinValue().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
-		result.update(NotNull().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
-		result.update(MinPopulation().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
-		result.update(MinObject().calc(df_persons, df_works, df_orgUnits, spark, sample_num))
+		result.update(MinLength().calc(dataFrames, spark, sample_num))
+		result.update(MinValue().calc(dataFrames, spark, sample_num))
+		result.update(NotNull().calc(dataFrames, spark, sample_num))
+		result.update(MinPopulation().calc(dataFrames, spark, sample_num))
+		result.update(MinObject().calc(dataFrames, spark, sample_num))
 		
 		
 		return self._formateResult(result)

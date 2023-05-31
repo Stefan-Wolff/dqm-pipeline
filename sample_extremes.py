@@ -16,8 +16,8 @@ def run(config):
 	
 	# load data
 	if "persons" == config.entity:
-		dataPath = "data/ORCID_persons/*"
-		schemaPath = "data/orcid_persons.schema.json"
+		dataPath = "data/persons.jsonl.gz"
+		schemaPath = "data/persons.schema.json"
 	elif "works" == config.entity:
 		dataPath = "data/ORCID_works/*"
 		schemaPath = "data/orcid_works.schema.json"

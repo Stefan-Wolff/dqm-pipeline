@@ -23,8 +23,8 @@ class Metric:
 		return result
 		
 		
-	def calc(self, df_persons, df_works, df_orgUnits, spark, sample_num):
-		result = self._calc(df_persons, df_works, df_orgUnits, spark)
+	def calc(self, dataFrames, spark, sample_num):
+		result = self._calc(dataFrames, spark)
 		
 		self.__showSamples(result, sample_num)
 		
