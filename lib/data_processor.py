@@ -9,7 +9,8 @@ class DataProcessor:
 		# init spark session
 		spark = SparkSession	\
 					.builder	\
-					.config('spark.driver.memory', '32G') \
+					.config('spark.driver.memory', '180G') \
+					.config('spark.sql.parquet.aggregatePushdown', True) \
 					.getOrCreate()
 
 
@@ -20,6 +21,7 @@ class DataProcessor:
 		# load data
 		dataFrames = {}
 		for entity in sources.keys():
+		
 			with open("data/schemes/" + entity + ".schema", 'r') as f:
 				schema = StructType.fromJson(json.load(f))
 			

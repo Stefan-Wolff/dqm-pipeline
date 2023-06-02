@@ -29,9 +29,8 @@ class UniqueValue(Metric):
 
 					df_notNull = dataFrame.where(dataFrame[field].isNotNull()).select(field)
 					df_valid = df_notNull.distinct()
-					indicator = df_valid.count() / df_notNull.count()
 					
-					result[key] = (indicator, df_notNull.subtract(df_valid))
+					result[key] = df_valid.count() / df_notNull.count()
 					break
 		
 		return result
@@ -61,22 +60,19 @@ class NoContradict(Metric):
 		df_notNull = df_affils.where(df_affils["affil_exploded.startYear"].isNotNull() & df_affils["affil_exploded.endYear"].isNotNull())
 		df_valid = df_notNull.where(df_notNull["affil_exploded.startYear"] <= df_notNull["affil_exploded.endYear"])
 		
-		indicator = df_valid.count() / df_notNull.count()
-		result["persons.affiliations.startBeforeEnd"] = (indicator, df_notNull.subtract(df_valid))
+		result["persons.affiliations.startBeforeEnd"] = df_valid.count() / df_notNull.count()
 		
 		# ISBN XOR ISSN
 		df_notNull = df_works.where(df_works["isbn"].isNotNull() | df_works["issn"].isNotNull())
 		df_invalid = df_notNull.where(df_notNull["isbn"].isNotNull() & df_notNull["issn"].isNotNull())
 		
-		indicator = 1 - df_invalid.count() / df_notNull.count()
-		result["works.isbnXORissn"] = (indicator, df_invalid)
+		result["works.isbnXORissn"] = 1 - df_invalid.count() / df_notNull.count()
 		
 		# ISBN & ("book" in type)
 		df_notNull = df_works.where(df_works["isbn"].isNotNull() & df_works["type"].isNotNull())
 		df_invalid = df_notNull.where(df_notNull["isbn"].isNotNull() & ~df_notNull["type"].contains("book"))
 		
-		indicator = 1 - df_invalid.count() / df_notNull.count()
-		result["works.isbnOnlyBook"] = (indicator, df_invalid)
+		result["works.isbnOnlyBook"] = 1 - df_invalid.count() / df_notNull.count()
 		
 		
 		return result
@@ -96,10 +92,10 @@ class Consistency(Aggregation):
 		
 		
 	
-	def calc(self, dataFrames, spark, sample_num):
+	def calc(self, dataFrames, spark):
 		result = {}
 		
-		result.update(UniqueValue().calc(dataFrames, spark, sample_num))
-		result.update(NoContradict().calc(dataFrames, spark, sample_num))
+		result.update(UniqueValue().calc(dataFrames, spark))
+		result.update(NoContradict().calc(dataFrames, spark))
 		
 		return result

@@ -1,7 +1,7 @@
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
 from pylatexenc.latex2text import LatexNodes2Text
-from pyspark.sql.functions import udf, when, explode, lit, regexp_extract, regex_replace
+from pyspark.sql.functions import udf, when, explode, lit, regexp_extract, regexp_replace, lower
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 				
 class ExtractBibtex:
@@ -114,45 +114,33 @@ class ExtractBibtex:
 				
 			
 			return result
-			
-			
-	def __selectValues(record, bibtex):
-		result = dict(record)
-		
-		if "doi" in bibtex and bibtex["doi"] and not result["doi"]:
-			result["doi"] = bibtex["doi"]
-		
-		if "year" in bibtex and bibtex["year"] and not result["date"]:
-			result["date"] = bibtex["year"]
-		
-		if "journal" in bibtex and bibtex["journal"] and not result["journal"]:
-			result["journal"] = bibtex["journal"]
-
-		if "abstract" in bibtex and bibtex["abstract"] and not result["abstract"]:
-			result["abstract"] = bibtex["abstract"]
-
-
-		if "orcid-numbers" in bibtex and bibtex["orcid-numbers"]:
-			result["authors"] = bibtex["orcid-numbers"].replace(" and ", "#").replace("/", "|")
-			
-		elif "author" in bibtex and not record["authors"]:
-			result["authors"] = bibtex["author"].replace(" and ", "#")
-
-
-		return result
 		
 		
 class ParseValues:
-	ISSN = r'(\d{13})|(\d{3}-\d-\d{4}-\d{4}-\d)|(\d{8})|(\d{4}-\d{3}[\dxX])'
-	ISBN = r'([0-9X\-]{13}+)|([0-9X\-]{10}+)'
+	ISSN = r'^(((977)-\d{3}-\d{4}-\d{2}-\d)|(\d{4}-\d{3}[0-9xX]))$'
+	ISBN = r'^(((978)-\d-\d{3}-\d{5}-\d)|(\d-\d{3}-\d{5}-\d))$'
 
 	def run(self, dataFrames, spark):
 		df_works = dataFrames["works"]
 
-		df_parsed = df_works.withColumn("issn_parsed", regexp_extract(regex_replace("issn", "-", ""), '(\d{13})')
+		# ISSN & ISBN
+		df_parsed = df_works.withColumn("issn_replaced", regexp_replace(regexp_replace(lower("issn"), r'(issn)| ', ''), r'[./_]', '-'))	\
+							.withColumn("issn_parsed", regexp_extract("issn_replaced", ParseValues.ISSN, 0))	\
+							.withColumn("isbn_replaced", regexp_replace(regexp_replace(lower("isbn"), r'(isbn)| ', ''), r'[./_]', '-'))	\
+							.withColumn("isbn_parsed", regexp_extract("isbn_replaced", ParseValues.ISBN, 0))	\
+							.withColumn("isbn_parsed2", regexp_extract("issn_replaced", ParseValues.ISBN, 0))
 		
-		df_parsed.where(df_parsed["issn"].isNotNull() & (df_parsed["issn_parsed"] != df_parsed["issn"])).select("issn_parsed", "issn").show(10, 50)
+		result = {
+			"works": df_parsed.withColumn("issn", when(df_parsed["issn_parsed"].isNotNull() & (df_parsed["issn_parsed"] != ""), df_parsed["issn_parsed"]).otherwise(lit(None)))	\
+							  .withColumn("isbn", when(df_parsed["isbn_parsed"].isNotNull() & (df_parsed["isbn_parsed"] != ""), df_parsed["isbn_parsed"])	\
+												.otherwise(when(	\
+													df_parsed["isbn_parsed2"].isNotNull() & (df_parsed["isbn_parsed2"] != ""), df_parsed["isbn_parsed2"]).otherwise(lit(None))	\
+												))	\
+							   .select(df_works.columns)
+		}
 		
-		# todo: entsprechend der Stichprobenenanalyse 3 Parse-Schritte ableiten (und in die umsetzung übernehmen)
+		result = {
+			"works": df_works
+		}
 		
-		df_parsed.x()
+		return result

@@ -1,5 +1,7 @@
 import argparse
 from tasks.transform_parse import *
+from tasks.transform_enrich import *
+from tasks.transform_standard import *
 from lib.data_processor import DataProcessor
 
 
@@ -7,18 +9,22 @@ class Transformer(DataProcessor):
 	def _run(self, dataFrames, config, spark):
 		transforms = {
 			"ExtractBibtex": ExtractBibtex(),
-			"ParseValues": ParseValues()
+			"ParseValues": ParseValues(),
+			"JoinCrossRef": JoinCrossRef(),
+			"StandardizeOrgs": StandardizeOrgs()
 		}
 			
-		class_name = type(self).__name__
-		
 		#dataFrames["works"] = spark.read.json("data/input/orcid_works_00.jsonl")
 		
-		df_results = transforms[config.transformation].run(dataFrames, spark)
+		transform_impl = transforms[config.transformation]
+		df_results = transform_impl.run(dataFrames, spark)
 		for entity, df in df_results.items():
-			outPath = "data/parquets/" + config.chain + "." + class_name + "/" + entity
+			class_name = type(transform_impl).__name__
+			new_chain = config.chain + "." + class_name if ("initial" != config.chain) else class_name
+
+			outPath = "data/parquets/" + new_chain + "/" + entity
 			df.write.parquet(outPath, mode="overwrite")
-			print(config.chain + "." + class_name + "/" + entity + " written")
+			print(outPath + " written")
 
 ### entry
 if "__main__" == __name__:

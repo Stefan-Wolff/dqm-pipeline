@@ -8,8 +8,7 @@ def run(config):
 	# init spark session
 	spark = SparkSession	\
 				.builder	\
-				.config('spark.driver.memory', '16G') \
-				.config('spark.executor.cores', '16') \
+				.config('spark.driver.memory', '32G')	\
 				.getOrCreate()
 
 
@@ -22,9 +21,6 @@ def run(config):
 		if config.entity:
 			if name != config.entity :
 				continue
-				
-		if "persons" == name or "works" == name:
-			continue
 				
 		print("processing " + name + " ..")
 		

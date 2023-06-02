@@ -30,8 +30,9 @@ class Analyzer(DataProcessor):
 		results = {}
 		for name, metric in Analyzer.METRICS.items():
 			if name in config.metrics:
-				metric_results = metric.calc(dataFrames, spark, config.sample_num)
+				metric_results = metric.calc(dataFrames, spark)
 				results.update(metric_results)
+					
 
 		print(results)
 
@@ -63,7 +64,6 @@ if "__main__" == __name__:
 
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Data Analyzer', description='Run metrics and show samples of invalid data')
-	parser.add_argument('-n', '--sample_num', help='the number of samples to print', default=0, type=int)
 	parser.add_argument('-m', '--metrics', help='names of metrics to run', action="extend", nargs="+", required=True)
 	parser.add_argument('-c', '--chain', help='source chain if analyze transformed data', default='initial')
 					

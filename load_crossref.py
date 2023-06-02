@@ -15,9 +15,10 @@ TMP_DIR = "data/tmp/CrossRef/"
 RESULT_NUM = 32
 
 ### functions
-def formate_authors(authors):
+def formate_authors(authors, doi):
 	result = []
 	
+	i = 0
 	for author in authors:
 		result_entry = {}
 
@@ -28,12 +29,17 @@ def formate_authors(authors):
 			result_entry["lastName"] = author["family"]
 		
 		if "ORCID" in author:
-			result_entry["orcid_id"] = author["ORCID"].split("/")[-1]
+			result_entry["id"] = author["ORCID"].split("/")[-1]
+		else:
+			result_entry["id"] = doi + "_" + str(i)
 				
 		if result_entry:
 			result.append(result_entry)
 			
+		i += 1
+			
 	return result
+
 
 def fetch_data(record):
 	result = {
@@ -42,27 +48,27 @@ def fetch_data(record):
 	}
 	
 	if "title" in record:
-		result["title"] = record["title"][0] if (1 == len(record["title"])) else record["title"],
+		result["title"] = record["title"][0]
 	
 	if "abstract" in record:
 		result["abstract"] = record["abstract"]
 	
 	if "author" in record:
-		formatted_authors = formate_authors(record["author"])
+		formatted_authors = formate_authors(record["author"], result["doi"])
 		if formatted_authors:
 			result["authors"] = formatted_authors
 	
 	if "subtitle" in record:
-		result["subTitle"] = record["subtitle"][0] if (1 == len(record["subtitle"])) else record["subtitle"]
+		result["subTitle"] = record["subtitle"][0]
 	
 	if "ISBN" in record:
-		result["isbn"] = record["ISBN"][0] if (1 == len(record["ISBN"])) else record["ISBN"]
+		result["isbn"] = record["ISBN"][0]
 	
 	if "ISSN" in record:
-		result["issn"] = record["ISSN"][0] if (1 == len(record["ISSN"])) else record["ISSN"]
+		result["issn"] = record["ISSN"][0]
 		
 	if "URL" in record:
-		result["url"] = record["URL"][0] if (1 == len(record["URL"])) else record["URL"]
+		result["url"] = record["URL"][0]
 
 	if "published" in record and "date-parts" in record["published"] and record["published"]["date-parts"]:
 		result["date"] = "-".join(str(e) for e in record["published"]["date-parts"][0])
