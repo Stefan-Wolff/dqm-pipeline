@@ -1,10 +1,11 @@
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
 from pylatexenc.latex2text import LatexNodes2Text
-from pyspark.sql.functions import udf, when, explode, lit, regexp_extract, regexp_replace, lower
+from pyspark.sql.functions import udf, when, explode, lit, regexp_extract, regexp_replace, col
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
+
 				
-class ExtractBibtex:
+class ParseBibtex:
 	BIBTEX_SCHEMA = StructType([
 		StructField('doi', StringType()),
 		StructField('date', StringType()),
@@ -26,7 +27,7 @@ class ExtractBibtex:
 		df_persons = dataFrames["persons"]
 		
 		# parse bibtex
-		cust_parse = udf(lambda bibtex, publ_id: self.__parseBibtex(bibtex, publ_id), ExtractBibtex.BIBTEX_SCHEMA)
+		cust_parse = udf(lambda bibtex, publ_id: self.__parseBibtex(bibtex, publ_id), ParseBibtex.BIBTEX_SCHEMA)
 		df_bibtex = df_works.withColumn('bibtex_data', cust_parse(df_works["bibtex"], df_works["orcid_publication_id"]))
 		
 		
@@ -82,7 +83,7 @@ class ExtractBibtex:
 					pass
 
 			result = {"type": entry["ENTRYTYPE"]}
-			for field in ExtractBibtex.BIBTEX_SCHEMA:
+			for field in ParseBibtex.BIBTEX_SCHEMA:
 				if isinstance(field.dataType, StringType) and (field.name in entry) and entry[field.name]:
 					result[field.name] = entry[field.name]
 			
@@ -114,33 +115,39 @@ class ExtractBibtex:
 				
 			
 			return result
-		
-		
+	
+
 class ParseValues:
-	ISSN = r'^(((977)-\d{3}-\d{4}-\d{2}-\d)|(\d{4}-\d{3}[0-9xX]))$'
-	ISBN = r'^(((978)-\d-\d{3}-\d{5}-\d)|(\d-\d{3}-\d{5}-\d))$'
+
+	FOREIGN = {
+		"issn": r'(?<=([iI][sS][sS][nN][^a-z^A-Z]))(((977)-\d{3}-\d{4}-\d{2}-\d)|(\d{4}-\d{3}[0-9xX]))',
+		"isbn": r'(?<=([iI][sS][bB][nN][^a-z^A-Z]))(([0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9X])|(97[89][-\ ]?[0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9]))',
+		"doi": r'(?<=([dD][oO][iI][^a-z^A-Z]))(10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+)'
+	}
 
 	def run(self, dataFrames, spark):
 		df_works = dataFrames["works"]
 
-		# ISSN & ISBN
-		df_parsed = df_works.withColumn("issn_replaced", regexp_replace(regexp_replace(lower("issn"), r'(issn)| ', ''), r'[./_]', '-'))	\
-							.withColumn("issn_parsed", regexp_extract("issn_replaced", ParseValues.ISSN, 0))	\
-							.withColumn("isbn_replaced", regexp_replace(regexp_replace(lower("isbn"), r'(isbn)| ', ''), r'[./_]', '-'))	\
-							.withColumn("isbn_parsed", regexp_extract("isbn_replaced", ParseValues.ISBN, 0))	\
-							.withColumn("isbn_parsed2", regexp_extract("issn_replaced", ParseValues.ISBN, 0))
+		df_parsed = df_works
+
+		# lookup in foreign fields
+		for field, pattern in ParseValues.FOREIGN.items():
+			df_parsed = df_parsed.withColumn("foreign", lit(""))
+			for foreign in ["doi", "url", "isbn", "subTitle", "journal_title", "title"]:
+				df_parsed = df_parsed.withColumn("foreign", when(col(foreign).isNotNull() & (col("foreign") == ""),	\
+																regexp_extract(foreign, pattern, 0))	\
+															.otherwise(col("foreign")))
+																
+			df_parsed = df_parsed.withColumn(field, when((col(field).isNull() | (col(field) == "")) & (col("foreign") != ""), col("foreign")).otherwise(col(field)))
 		
-		result = {
-			"works": df_parsed.withColumn("issn", when(df_parsed["issn_parsed"].isNotNull() & (df_parsed["issn_parsed"] != ""), df_parsed["issn_parsed"]).otherwise(lit(None)))	\
-							  .withColumn("isbn", when(df_parsed["isbn_parsed"].isNotNull() & (df_parsed["isbn_parsed"] != ""), df_parsed["isbn_parsed"])	\
-												.otherwise(when(	\
-													df_parsed["isbn_parsed2"].isNotNull() & (df_parsed["isbn_parsed2"] != ""), df_parsed["isbn_parsed2"]).otherwise(lit(None))	\
-												))	\
-							   .select(df_works.columns)
+
+		return {
+			"works": df_parsed.select(df_works.columns)
 		}
-		
-		result = {
-			"works": df_works
-		}
-		
-		return result
+	
+
+class Parse:
+	def run(self, dataFrames, spark):
+		dataFrames.update(ParseValues().run(dataFrames, spark))		
+		return ParseBibtex().run(dataFrames, spark)
+	

@@ -6,7 +6,7 @@ from pyspark.sql import Row
 
 class MinLength(Metric):
 
-	MIN_NUMS = {
+	MIN_NUMS = {								# used in transform_correct
 		"works.title": 6,
 		"works.journal_title": 6,
 		"works.abstract": 12,

@@ -8,7 +8,7 @@ class Correctness(Metric):
 
 	# chinese, japanese, korean, cyrillic
 	INVALID_ALPHABET = r'[\u4e00-\u9FFF\u3040-\u30ff\uac00-\ud7a3а-яА-Я]'
-	INVALID_TEXT = r'(^[ \*\-/]|[ \*\-/]$)(^[\.,’\(@])([\.\-\*]+)|([\+\?]{1})|(k\.a\.)|(n\.n\.)|(n/a)|("")(<\w+>)|([ ]{2,})'
+	INVALID_TEXT = r'(^[ *.\-,’\(\)@\t])|([ *\-,’\(\)@\t]$)|(^[.\-*]+$)|(^[nk][\./][na][\./]$)|("")|(  )'						# used in transform_correct
 	INVALID_NAMES = r'[\(\)/\t0-9]+'
 	ORCID_ID = r'^([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X])'
 
@@ -22,20 +22,20 @@ class Correctness(Metric):
 			"orcid_id":				{"pattern": ORCID_ID},
 			"orcid_publication_id":	{"pattern": r'^([0-9]+)$'},
 			"date":					{"pattern": r'^((' + YEAR_1800 + ')(-[0-9]{2}(-[0-9]{2})?)?)$'},
-			"url":					{"pattern": r'^((http://|https://)[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,})$'},
-			"doi":					{"pattern": r'^(10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+)$'},
-			"issn":					{"pattern": r'^((977)-\d{3}-\d{4}-\d{2}-\d)$|^(\d{4}-\d{3}[0-9xX])$'},
-			"isbn":					{"pattern": r'^(([0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9X])|(97[89][-\ ]?[0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9]))$'},		# ISBN 10 or ISBN 13
-			"abstract":				{"pattern": r'([^\s]+ ){4}[^\s]+',									# min 5 words
-									 "antipattern": [r'^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt]', r'(^[\t\r\n]|[\t\r\n]$)', INVALID_ALPHABET, INVALID_TEXT]},
+			"url":					{"pattern": r'^(((http[s]?://)?[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_\(\)#]*)?\??(?:[-\+~=&;%@.\w_:,/\(\)]*)#?(?:[-\+=&;%@.\w_:,/\(\)]*))?)$'},		# used in transform_correct
+			"doi":					{"pattern": r'^(10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+)$'},																						# used in transform_correct
+			"issn":					{"pattern": r'^((977[\-]?)?(\d[\-]?){6}\d([-]?[0-9xX]))$'},
+			"isbn":					{"pattern": r'(97[89][\-]?)?([0-9][-]?){8}[0-9]([-]?[0-9xX])'},																					# ISBN 10 or ISBN 13
+			"abstract":				{"pattern": r'([^\s]+ ){4}[^\s]+',																												# min 5 words
+									 "antipattern": [r'^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt]', r'(^[\t\r\n]+|[\t\r\n]+$)', INVALID_ALPHABET, INVALID_TEXT]},
 			"title":				{"antipattern": [r'[\n\r\t]', INVALID_ALPHABET, INVALID_TEXT]},
 			"subTitle":				{"antipattern": [r'[\n\r\t]', INVALID_ALPHABET, INVALID_TEXT]}
 		},
 		"persons": {
-			"id":						{"pattern": r'[0-9X\-_]+'},
-			"country":					{"pattern": r'[A-Z]{2}'},
-			"affiliations.startYear":	{"pattern": r'(19[0-9][0-9])|(20[0-9][0-9])'},		# 1900-2099
-			"affiliations.endYear":		{"pattern": r'(19[0-9][0-9])|(20[0-9][0-9])'},
+			"id":						{"pattern": r'^[0-9X\-_]+$'},
+			"country":					{"pattern": r'^[A-Z]{2}$'},
+			"affiliations.startYear":	{"pattern": r'^((19[0-9][0-9])|(20[0-9][0-9]))$'},		# 1900-2099
+			"affiliations.endYear":		{"pattern": r'^((19[0-9][0-9])|(20[0-9][0-9]))$'},
 			"firstName":				{"antipattern": [INVALID_NAMES, INVALID_ALPHABET]},
 			"lastName":					{"antipattern": [INVALID_NAMES, INVALID_ALPHABET]},
 			"publishedName":			{"antipattern": [INVALID_NAMES, INVALID_ALPHABET]},

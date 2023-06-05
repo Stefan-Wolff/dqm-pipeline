@@ -68,9 +68,11 @@ def isolate_orgUnit(affil):
 
 	if "orgIDType" in affil:
 		result["type"] = affil["orgIDType"]
+		del affil["orgIDType"]
 		
 	if "orgName" in affil:
 		result["name"] = affil["orgName"]
+		del affil["orgName"]
 		
 	return result
 	

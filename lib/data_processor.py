@@ -11,6 +11,7 @@ class DataProcessor:
 					.builder	\
 					.config('spark.driver.memory', '180G') \
 					.config('spark.sql.parquet.aggregatePushdown', True) \
+					.config('spark.sql.codegen.wholeStage', False) \
 					.getOrCreate()
 
 

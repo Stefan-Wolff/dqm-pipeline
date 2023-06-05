@@ -1,17 +1,20 @@
 import argparse
 from tasks.transform_parse import *
 from tasks.transform_enrich import *
-from tasks.transform_standard import *
+from tasks.transform_correct import *
 from lib.data_processor import DataProcessor
 
 
 class Transformer(DataProcessor):
 	def _run(self, dataFrames, config, spark):
 		transforms = {
-			"ExtractBibtex": ExtractBibtex(),
+			"ParseBibtex": ParseBibtex(),
 			"ParseValues": ParseValues(),
+			"Parse": Parse(),
 			"JoinCrossRef": JoinCrossRef(),
-			"StandardizeOrgs": StandardizeOrgs()
+			"CorrectOrgs": CorrectOrgs(),
+			"CorrectMinLength": CorrectMinLength(),
+			"CorrectValues": CorrectValues()
 		}
 			
 		#dataFrames["works"] = spark.read.json("data/input/orcid_works_00.jsonl")
