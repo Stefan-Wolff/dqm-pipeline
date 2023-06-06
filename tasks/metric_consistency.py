@@ -1,5 +1,7 @@
 from lib.metrics import Metric, Aggregation
-from pyspark.sql.functions import explode
+from pyspark.sql.functions import explode, udf, col
+from pyspark.sql.types import StringType
+from lib.duplicates import WorksKey
 
 
 class UniqueValue(Metric):
@@ -78,6 +80,26 @@ class NoContradict(Metric):
 		return result
 	
 	
+class Uniqueness(Metric):
+
+	def _weights(self):
+		return {
+			"works": 1
+		}
+	
+	def _calc(self, dataFrames, spark):
+		df_works = dataFrames["works"]
+		
+		cust_key = udf(lambda title, date, authors: WorksKey().build(title, date, authors))
+		df_key = df_works.where(col("title").isNotNull() & col("date").isNotNull() & col("authors").isNotNull())	\
+						 .withColumn("key", cust_key(col("title"), col("date"), col("authors")))	\
+						 .select("key")	\
+						 .distinct()
+						 
+						 
+		return {"works": df_key.count() / df_works.count()}
+	
+		
 		
 		
 class Consistency(Aggregation):

@@ -14,10 +14,9 @@ class Transformer(DataProcessor):
 			"JoinCrossRef": JoinCrossRef(),
 			"CorrectOrgs": CorrectOrgs(),
 			"CorrectMinLength": CorrectMinLength(),
-			"CorrectValues": CorrectValues()
+			"CorrectValues": CorrectValues(),
+			"CorrectContradict": CorrectContradict()
 		}
-			
-		#dataFrames["works"] = spark.read.json("data/input/orcid_works_00.jsonl")
 		
 		transform_impl = transforms[config.transformation]
 		df_results = transform_impl.run(dataFrames, spark)

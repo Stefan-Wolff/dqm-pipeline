@@ -58,7 +58,7 @@ class ParseBibtex:
 								 
 		return {
 			"persons": df_persons.union(df_authors),
-			"works": df_bibtex
+			"works": df_bibtex.select(df_works.columns)
 		}
 
 

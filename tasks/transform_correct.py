@@ -1,4 +1,4 @@
-from pyspark.sql.functions import lit, col, regexp_replace, length
+from pyspark.sql.functions import lit, col, regexp_replace, length, when, udf
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from .metric_correctness import Correctness
 from .metric_completeness import MinLength
@@ -42,7 +42,7 @@ class CorrectOrgs:
 	
 class CorrectMinLength:
 
-	def _calc(self, dataFrames, spark):
+	def run(self, dataFrames, spark):
 		result = {}
 		
 		df_persons = dataFrames["persons"]
@@ -56,9 +56,9 @@ class CorrectMinLength:
 			field = levels[-1]
 			
 			if "persons" == levels[0]:
-				df_persons_cor = df_persons_cor.withColumn(field, when(minNum > length(col(field)), lit(None))).otherwise(col(field))
+				df_persons_cor = df_persons_cor.withColumn(field, when(minNum > length(col(field)), lit(None)).otherwise(col(field)))
 			else:
-				df_works_cor = df_works_cor.withColumn(field, when(minNum > length(col(field)), lit(None))).otherwise(col(field))
+				df_works_cor = df_works_cor.withColumn(field, when(minNum > length(col(field)), lit(None)).otherwise(col(field)))
 			
 		
 		return {
@@ -74,11 +74,11 @@ class CorrectValues:
 								StructField('startYear', StringType()), \
 								StructField('endYear', StringType())]))
 
-	ISSN = Correctness.CONFIG["works"]["issn"]
-	ISBN = Correctness.CONFIG["works"]["isbn"]
-	URL = Correctness.CONFIG["works"]["url"]
-	DOI = Correctness.CONFIG["works"]["doi"]
-	ABSTRACT = Correctness.CONFIG["works"]["abstract"]
+	ISSN = Correctness.CONFIG["works"]["issn"]["pattern"]
+	ISBN = Correctness.CONFIG["works"]["isbn"]["pattern"]
+	URL = Correctness.CONFIG["works"]["url"]["pattern"]
+	DOI = Correctness.CONFIG["works"]["doi"]["pattern"]
+	ABSTRACT = Correctness.CONFIG["works"]["abstract"]["pattern"]
 	
 	ABSTRACT_REPLACE = Correctness.INVALID_TEXT + r'|(^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt])|(^[\t\r\n]|[\t\r\n]$)'
 	TITLE_REPLACE = Correctness.INVALID_TEXT
@@ -117,85 +117,32 @@ class CorrectValues:
 		# names in persons
 		for field in ["firstName", "lastName", "otherNames", "publishedName"]:
 			df_persons_cor = df_persons_cor.withColumn(field, when(col(field).rlike(CorrectValues.INVALID_ALPHABET), lit(None)).otherwise(col(field)))	\
-										   .withColumn(field, regexp_replace(field, regexp_replace(field, r'\(.*\)', ''), r'^[ ]|[ ]$', ''))	\
+										   .withColumn(field, regexp_replace(regexp_replace(field, r'\(.*\)', ''), r'^[ ]|[ ]$', ''))	\
 										   .withColumn(field, when(col(field).rlike(CorrectValues.INVALID_NAMES), lit(None)).otherwise(col(field)))
 			   
 		# title
 		df_works_cor = df_works_cor.withColumn("title_replaced", regexp_replace(regexp_replace(regexp_replace("title", CorrectValues.TITLE_REPLACE, ''), '[ ]{2,}', ' '), '^[ ]|[ ]$|[\n\r\t]', ''))	\
-								   .withColumn("title", when(col("title_replaced") != "", col("title_replaced")).otherwise(lit(None))))
+								   .withColumn("title", when(col("title_replaced") != "", col("title_replaced")).otherwise(lit(None)))
 		# subTitle
-		df_works_cor = df_works_cor.withColumn("subTitle_replaced", regexp_replace(regexp_replace(regexp_replace("subTitle", CorrectValues.TITLE_REPLACE), '[ ]{2,}', ' '), '^[ ]|[ ]$|[\n\r\t]', ''))	\
+		df_works_cor = df_works_cor.withColumn("subTitle_replaced", regexp_replace(regexp_replace(regexp_replace("subTitle", CorrectValues.TITLE_REPLACE, ''), '[ ]{2,}', ' '), '^[ ]|[ ]$|[\n\r\t]', ''))	\
 								   .withColumn("subTitle", when(col("subTitle_replaced") != "", col("subTitle_replaced")).otherwise(lit(None)))
 		
 		
 		return {
 			"works": df_works_cor.select(df_works.columns),
-			"persons": df_persons_cor.select(df_persons)
+			"persons": df_persons_cor.select(df_persons.columns)
 		}
 
 
 class CorrectContradict:
 
-	AFFIL_SCHEMA = ArrayType(StructType([ \
-								StructField('role', StringType()), \
-								StructField('orgID', StringType()), \
-								StructField('orgName', StringType()), \
-								StructField('role', StringType()), \
-								StructField('startYear', StringType()), \
-								StructField('endYear', StringType())]))
-
-	YEAR = Correctness.CONFIG["persons"]["affiliations.startYear"]
-	
-
 	def run(self, dataFrames, spark):
 		df_works = dataFrames["works"]
-		df_persons = dataFrames["persons"]
-	
-		df_works_cor = df_works
-		df_persons_cor = df_persons
-	
-		# affiliations.startYear & affiliations.endYear
-		cust_affil = udf(lambda affils: self.__correctAffil(affils), CorrectContradict.AFFIL_SCHEMA)
-		df_persons_cor = df_persons_cor.withColumn("affiliations", cust_affil(col("affiliations")))
-		
-		# delete ISBN if ISSN is available
-		df_works_cor = df_works_cor.withColumn("isbn", when(col("issn").isNotNull(), lit(None)).otherwise(col("isbn")))
-		
 		
 		return {
-			"works": df_works_cor,
-			"persons": df_persons_cor
+			"works": df_works.withColumn("isbn", when(col("issn").isNotNull(), lit(None)).otherwise(col("isbn")))
 		}
-		
-		
-	def __correctAffil(self, affils):
-		if not affils:
-			return None
-			
-		result = []
-		for affil in affils:
-			entry = {}
-			for field in ["startYear", "endYear"]:
-				if field in affil and affil[field]:
-					if re.search(CorrectContradict.YEAR, affil[field]):
-						entry[field] = affil[field]
-						
-			if "orgID" in affil and affil["orgID"]:
-				entry["orgID"] = affil["orgID"]
-			if "role" in affil and affil["role"]:
-				entry["role"] = affil["role"]
-				
-			if ("startYear" in entry) and ("endYear" in entry) and (entry["startYear"] > entry["endYear"]):
-				del entry["startYear"]
-				del entry["endYear"]
-				
-			if entry:
-				result.append(entry)
-				
 
-		return result if result else None
-		
-		
 		
 
 class Correct:

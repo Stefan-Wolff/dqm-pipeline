@@ -31,7 +31,7 @@ SEARCH_FOR = {
 	"/work:work/common:external-ids/common:external-id/common:external-id-type": {"elementName": None},
 	"/work:work/common:external-ids/common:external-id/common:external-id-value": {"elementName": None},
 	"/work:work/common:external-ids/common:external-id/common:external-id-normalized": {"elementName": None},
-	"doi": {"elementName": "doi"},																		# based on external-id
+	"doi": {"elementName": "doi"},																			# based on external-id
 	"issn": {"elementName": "issn"},																		# based on external-id
 	"isbn": {"elementName": "isbn"},																		# based on external-id
 	"/work:work/work:contributors/work:contributor/work:credit-name": {
