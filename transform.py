@@ -13,15 +13,17 @@ class Transformer(DataProcessor):
 			"ParseBibtex": ParseBibtex(),
 			"ParseValues": ParseValues(),
 			"Parse": Parse(),
-			"JoinCrossRef": JoinCrossRef(),
 			"CorrectOrgs": CorrectOrgs(),
 			"CorrectMinLength": CorrectMinLength(),
 			"CorrectValues": CorrectValues(),
 			"CorrectContradict": CorrectContradict(),
-			"UniqueIDs": UniqueIDs(),
+			"CorrectDuplIDs": CorrectDuplIDs(),
+			"Correct": Correct(),
+			"JoinCrossRef": JoinCrossRef(),
 			"Merge": Merge(),
-			"RemoveContradict": RemoveContradict(),
-			"IncompleteObjects": IncompleteObjects()
+			"FilterContradict": FilterContradict(),
+			"FilterObjects": FilterObjects(),
+			"Filter": Filter()
 		}
 		
 		transform_impl = transforms[config.transformation]

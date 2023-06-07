@@ -175,7 +175,7 @@ class CorrectContradict:
 		}
 
 
-class UniqueIDs:
+class CorrectDuplIDs:
 
 	def run(self, dataFrames, spark):
 		df_works = dataFrames["works"]
@@ -200,6 +200,7 @@ class Correct:
 		dataFrames.update(CorrectMinLength().run(dataFrames, spark))		
 		dataFrames.update(CorrectValues().run(dataFrames, spark))		
 		dataFrames.update(CorrectContradict().run(dataFrames, spark))
-		dataFrames.update(UniqueIDs().run(dataFrames, spark))
-		return CorrectContradict().run(dataFrames, spark)
+		dataFrames.update(CorrectDuplIDs().run(dataFrames, spark))
+		
+		return dataFrames
 	

@@ -22,8 +22,8 @@ class Analyzer(DataProcessor):
 		"Correctness": Correctness(),
 		"UniqueValue": UniqueValue(),
 		"NoContradict": NoContradict(),
-		"Consistency": Consistency(),
-		"Uniqueness": Uniqueness()
+		"UniqueObject": UniqueObject(),
+		"Consistency": Consistency()
 	}
 
 	def _run(self, dataFrames, config, spark):

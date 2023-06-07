@@ -2,7 +2,7 @@ from pyspark.sql.functions import udf, col
 from .transform_correct import CorrectValues
 
 
-class RemoveContradict:
+class FilterContradict:
 	
 	def run(self, dataFrames, spark):
 		df_persons = dataFrames["persons"]
@@ -44,7 +44,7 @@ class RemoveContradict:
 		
 		
 		
-class IncompleteObjects:
+class FilterObjects:
 	def run(self, dataFrames, spark):
 		df_works = dataFrames["works"]
 		df_persons = dataFrames["persons"]
@@ -63,3 +63,12 @@ class IncompleteObjects:
 			"works": df_works_compl,
 			"persons": df_persons_compl
 		}
+		
+		
+		
+class Filter:
+	def run(self, dataFrames, spark):
+		dataFrames.update(FilterContradict().run(dataFrames, spark))		
+		dataFrames.update(FilterObjects().run(dataFrames, spark))		
+		
+		return dataFrames

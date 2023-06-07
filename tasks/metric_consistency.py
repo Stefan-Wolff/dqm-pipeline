@@ -80,7 +80,7 @@ class NoContradict(Metric):
 		return result
 	
 	
-class Uniqueness(Metric):
+class UniqueObject(Metric):
 
 	def _weights(self):
 		return {
@@ -90,9 +90,9 @@ class Uniqueness(Metric):
 	def _calc(self, dataFrames, spark):
 		df_works = dataFrames["works"]
 		
-		cust_key = udf(lambda title, date, authors: WorksKey().build(title, date, authors))
+		cust_key = udf(lambda title, date, authors, publ_id: WorksKey().build(title, date, authors, publ_id))
 		df_key = df_works.where(col("title").isNotNull() & col("date").isNotNull() & col("authors").isNotNull())	\
-						 .withColumn("key", cust_key(col("title"), col("date"), col("authors")))	\
+						 .withColumn("key", cust_key(col("title"), col("date"), col("authors"), col("orcid_publication_id")))	\
 						 .select("key")	\
 						 .distinct()
 						 
@@ -107,9 +107,11 @@ class Consistency(Aggregation):
 	def _weights(self):
 									#	UniqueValue
 									#		NoContradict
+									#			UniqueObject
 		return {
-			"UniqueValue": 3,		#	1	2
-			"NoContradict": 1		#	0	1
+			"UniqueValue": 5,		#	1	2	2
+			"NoContradict": 1,		#	0	1	0
+			"UniqueObject": 3		#	0	2	1
 		}
 		
 		
@@ -119,5 +121,6 @@ class Consistency(Aggregation):
 		
 		result.update(UniqueValue().calc(dataFrames, spark))
 		result.update(NoContradict().calc(dataFrames, spark))
+		result.update(UniqueObject().calc(dataFrames, spark))
 		
 		return result
