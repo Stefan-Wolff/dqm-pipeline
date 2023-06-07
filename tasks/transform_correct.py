@@ -80,11 +80,13 @@ class CorrectValues:
 	DOI = Correctness.CONFIG["works"]["doi"]["pattern"]
 	ABSTRACT = Correctness.CONFIG["works"]["abstract"]["pattern"]
 	
-	ABSTRACT_REPLACE = Correctness.INVALID_TEXT + r'|(^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt])|(^[\t\r\n]|[\t\r\n]$)'
-	TITLE_REPLACE = Correctness.INVALID_TEXT
+	ABSTRACT_REPLACE = Correctness.INVALID_ABSTRACT + "|" + Correctness.INVALID_TEXT
+	TITLE_REPLACE = Correctness.INVALID_TEXT + r'|[\n\r\t]'
 
 	INVALID_ALPHABET = Correctness.INVALID_ALPHABET
 	INVALID_NAMES = Correctness.INVALID_NAMES
+
+	YEAR = Correctness.CONFIG["persons"]["affiliations.startYear"]["pattern"]
 
 
 	def run(self, dataFrames, spark):
@@ -121,17 +123,46 @@ class CorrectValues:
 										   .withColumn(field, when(col(field).rlike(CorrectValues.INVALID_NAMES), lit(None)).otherwise(col(field)))
 			   
 		# title
-		df_works_cor = df_works_cor.withColumn("title_replaced", regexp_replace(regexp_replace(regexp_replace("title", CorrectValues.TITLE_REPLACE, ''), '[ ]{2,}', ' '), '^[ ]|[ ]$|[\n\r\t]', ''))	\
+		df_works_cor = df_works_cor.withColumn("title_replaced", regexp_replace(regexp_replace(regexp_replace("title", CorrectValues.TITLE_REPLACE, ''), '[ ]{2,}', ' '), '^[ ]|[ ]$', ''))	\
 								   .withColumn("title", when(col("title_replaced") != "", col("title_replaced")).otherwise(lit(None)))
 		# subTitle
-		df_works_cor = df_works_cor.withColumn("subTitle_replaced", regexp_replace(regexp_replace(regexp_replace("subTitle", CorrectValues.TITLE_REPLACE, ''), '[ ]{2,}', ' '), '^[ ]|[ ]$|[\n\r\t]', ''))	\
+		df_works_cor = df_works_cor.withColumn("subTitle_replaced", regexp_replace(regexp_replace(regexp_replace("subTitle", CorrectValues.TITLE_REPLACE, ''), '[ ]{2,}', ' '), '^[ ]|[ ]$', ''))	\
 								   .withColumn("subTitle", when(col("subTitle_replaced") != "", col("subTitle_replaced")).otherwise(lit(None)))
+		
+		
+		# affiliations.startYear & affiliations.endYear
+		cust_affil = udf(lambda affils: self.__correctAffil(affils), CorrectValues.AFFIL_SCHEMA)
+		df_persons_cor = df_persons_cor.withColumn("affiliations", cust_affil(col("affiliations")))
 		
 		
 		return {
 			"works": df_works_cor.select(df_works.columns),
 			"persons": df_persons_cor.select(df_persons.columns)
 		}
+
+	def __correctAffil(self, affils):
+		if not affils:
+			return None
+			
+		result = []
+		for affil in affils:
+			entry = {}
+			for field in ["startYear", "endYear"]:
+				if field in affil and affil[field]:
+					if re.search(CorrectValues.YEAR, affil[field]):
+						entry[field] = affil[field]
+						
+			if "orgID" in affil and affil["orgID"]:
+				entry["orgID"] = affil["orgID"]
+			if "role" in affil and affil["role"]:
+				entry["role"] = affil["role"]
+				
+			if entry:
+				result.append(entry)
+				
+
+		return result if result else None
+
 
 
 class CorrectContradict:
@@ -143,13 +174,32 @@ class CorrectContradict:
 			"works": df_works.withColumn("isbn", when(col("issn").isNotNull(), lit(None)).otherwise(col("isbn")))
 		}
 
+
+class UniqueIDs:
+
+	def run(self, dataFrames, spark):
+		df_works = dataFrames["works"]
+		df_persons = dataFrames["persons"]
 		
+		df_works_unique = df_works.dropDuplicates(["doi"])	\
+								  .dropDuplicates(["bibtex"])	\
+								  .dropDuplicates(["orcid_publication_id"])
+		
+		df_persons_unique = df_persons.dropDuplicates(["id"])
+		
+		return {
+			"works": df_works_unique,
+			"persons": df_persons_unique
+		}
+
+
 
 class Correct:
 	def run(self, dataFrames, spark):
 		dataFrames.update(CorrectOrgs().run(dataFrames, spark))		
 		dataFrames.update(CorrectMinLength().run(dataFrames, spark))		
 		dataFrames.update(CorrectValues().run(dataFrames, spark))		
-		dataFrames.update(CorrectContradict().run(dataFrames, spark))		
+		dataFrames.update(CorrectContradict().run(dataFrames, spark))
+		dataFrames.update(UniqueIDs().run(dataFrames, spark))
 		return CorrectContradict().run(dataFrames, spark)
 	

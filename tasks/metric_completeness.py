@@ -220,7 +220,8 @@ class MinObject(Metric):
 		persons_num = df_persons.count()
 		df_persons_valid = df_persons.where(df_persons["id"].isNotNull() & \
 												((df_persons["firstName"].isNotNull() & df_persons["lastName"].isNotNull()) | \
-												df_persons["publishedName"].isNotNull()))
+												df_persons["publishedName"].isNotNull() | \
+												df_persons["otherNames"].isNotNull()))
 		result["persons"] = df_persons_valid.count() / persons_num
 			
 

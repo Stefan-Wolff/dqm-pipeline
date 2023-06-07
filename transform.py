@@ -2,6 +2,8 @@ import argparse
 from tasks.transform_parse import *
 from tasks.transform_enrich import *
 from tasks.transform_correct import *
+from tasks.transform_merge import *
+from tasks.transform_filter import *
 from lib.data_processor import DataProcessor
 
 
@@ -15,7 +17,11 @@ class Transformer(DataProcessor):
 			"CorrectOrgs": CorrectOrgs(),
 			"CorrectMinLength": CorrectMinLength(),
 			"CorrectValues": CorrectValues(),
-			"CorrectContradict": CorrectContradict()
+			"CorrectContradict": CorrectContradict(),
+			"UniqueIDs": UniqueIDs(),
+			"Merge": Merge(),
+			"RemoveContradict": RemoveContradict(),
+			"IncompleteObjects": IncompleteObjects()
 		}
 		
 		transform_impl = transforms[config.transformation]

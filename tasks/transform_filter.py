@@ -1,31 +1,15 @@
-from pyspark.sql.functions import udf
-from pyspark.sql.types import StructType, StructField, StringType, ArrayType
+from pyspark.sql.functions import udf, col
+from .transform_correct import CorrectValues
 
 
 class RemoveContradict:
-
-	AFFIL_SCHEMA = ArrayType(StructType([ \
-								StructField('role', StringType()), \
-								StructField('orgID', StringType()), \
-								StructField('orgName', StringType()), \
-								StructField('role', StringType()), \
-								StructField('startYear', StringType()), \
-								StructField('endYear', StringType())]))
-
-	YEAR = Correctness.CONFIG["persons"]["affiliations.startYear"]["pattern"]
-	
 	
 	def run(self, dataFrames, spark):
-		df_works = dataFrames["works"]
 		df_persons = dataFrames["persons"]
-	
-		df_works_cor = df_works
-		df_persons_cor = df_persons
 		
 		# affiliations.startYear & affiliations.endYear
-		cust_affil = udf(lambda affils: self.__correctAffil(affils), RemoveContradict.AFFIL_SCHEMA)
-		df_persons_cor = df_persons_cor.withColumn("affiliations", cust_affil(col("affiliations")))
-		
+		cust_affil = udf(lambda affils: self.__correctAffil(affils), CorrectValues.AFFIL_SCHEMA)
+		df_persons_cor = df_persons.withColumn("affiliations", cust_affil(col("affiliations")))
 		
 		return {
 			"persons": df_persons_cor
@@ -41,8 +25,7 @@ class RemoveContradict:
 			entry = {}
 			for field in ["startYear", "endYear"]:
 				if field in affil and affil[field]:
-					if re.search(RemoveContradict.YEAR, affil[field]):
-						entry[field] = affil[field]
+					entry[field] = affil[field]
 						
 			if "orgID" in affil and affil["orgID"]:
 				entry["orgID"] = affil["orgID"]
@@ -58,3 +41,25 @@ class RemoveContradict:
 				
 
 		return result if result else None
+		
+		
+		
+class IncompleteObjects:
+	def run(self, dataFrames, spark):
+		df_works = dataFrames["works"]
+		df_persons = dataFrames["persons"]
+
+		# works
+		df_works_compl = df_works.where(col("title").isNotNull() & \
+										(col("url").isNotNull() | col("doi").isNotNull()))
+		
+		# persons
+		df_persons_compl = df_persons.where(col("id").isNotNull() & \
+												((col("firstName").isNotNull() & col("lastName").isNotNull()) | \
+												  col("publishedName").isNotNull() | \
+												  col("otherNames").isNotNull()))
+
+		return {
+			"works": df_works_compl,
+			"persons": df_persons_compl
+		}

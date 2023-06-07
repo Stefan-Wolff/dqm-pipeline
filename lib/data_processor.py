@@ -10,6 +10,7 @@ class DataProcessor:
 		spark = SparkSession	\
 					.builder	\
 					.config('spark.driver.memory', '180G') \
+					.config('spark.driver.maxResultSize', '2G') \
 					.config('spark.sql.parquet.aggregatePushdown', True) \
 					.config('spark.sql.codegen.wholeStage', False) \
 					.getOrCreate()

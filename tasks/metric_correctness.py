@@ -8,8 +8,9 @@ class Correctness(Metric):
 
 	# chinese, japanese, korean, cyrillic
 	INVALID_ALPHABET = r'[\u4e00-\u9FFF\u3040-\u30ff\uac00-\ud7a3а-яА-Я]'
-	INVALID_TEXT = r'(^[ *.\-,’\(\)@\t])|([ *\-,’\(\)@\t]$)|(^[.\-*]+$)|(^[nk][\./][na][\./]$)|("")|(  )'						# used in transform_correct
+	INVALID_TEXT = r'(<[a-zA-Z/]+>)|(^[^a-zA-Z0-9]+)|([^a-zA-Z0-9.!?"\'\)]+$)|(^[nk][\./]?[na][\./]?$)|(  )'						# used in transform_correct
 	INVALID_NAMES = r'[\(\)/\t0-9]+'
+	INVALID_ABSTRACT = r'^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt]'
 	ORCID_ID = r'^([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X])'
 
 	# 1800-2023
@@ -25,9 +26,9 @@ class Correctness(Metric):
 			"url":					{"pattern": r'^(((http[s]?://)?[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_\(\)#]*)?\??(?:[-\+~=&;%@.\w_:,/\(\)]*)#?(?:[-\+=&;%@.\w_:,/\(\)]*))?)$'},		# used in transform_correct
 			"doi":					{"pattern": r'^(10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+)$'},																						# used in transform_correct
 			"issn":					{"pattern": r'^((977[\-]?)?(\d[\-]?){6}\d([-]?[0-9xX]))$'},
-			"isbn":					{"pattern": r'(97[89][\-]?)?([0-9][-]?){8}[0-9]([-]?[0-9xX])'},																					# ISBN 10 or ISBN 13
+			"isbn":					{"pattern": r'^(97[89][\-]?)?([0-9][-]?){8}[0-9]([-]?[0-9xX])$'},																					# ISBN 10 or ISBN 13
 			"abstract":				{"pattern": r'([^\s]+ ){4}[^\s]+',																												# min 5 words
-									 "antipattern": [r'^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt]', r'(^[\t\r\n]+|[\t\r\n]+$)', INVALID_ALPHABET, INVALID_TEXT]},
+									 "antipattern": [INVALID_ABSTRACT, INVALID_ALPHABET, INVALID_TEXT]},
 			"title":				{"antipattern": [r'[\n\r\t]', INVALID_ALPHABET, INVALID_TEXT]},
 			"subTitle":				{"antipattern": [r'[\n\r\t]', INVALID_ALPHABET, INVALID_TEXT]}
 		},
