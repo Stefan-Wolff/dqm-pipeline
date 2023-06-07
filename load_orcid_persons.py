@@ -90,7 +90,7 @@ def run():
 	count = 0
 	tar = tarfile.open(TMP_DIR + fileName)
 	parser = lib.xml_parse.Parser()
-
+	orgIDs = set()
 	with gzip.open(OUT_FILE, 'wt', encoding='utf-8') as outPerson:
 		with gzip.open(ORG_FILE, 'wt', encoding='utf-8') as outOrg:
 			for member in tar:
@@ -110,8 +110,10 @@ def run():
 						affils = person["affiliations"]
 						for affil in affils:
 							orgUnit = isolate_orgUnit(affil)
-							json.dump(orgUnit, outOrg)
-							outOrg.write('\n')
+							if not orgUnit["id"] in orgIDs:
+								json.dump(orgUnit, outOrg)
+								outOrg.write('\n')
+								orgIDs.add(orgUnit["id"])
 
 					json.dump(person, outPerson)
 					outPerson.write('\n')

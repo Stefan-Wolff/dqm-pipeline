@@ -17,7 +17,6 @@ class Transformer(DataProcessor):
 			"CorrectMinLength": CorrectMinLength(),
 			"CorrectValues": CorrectValues(),
 			"CorrectContradict": CorrectContradict(),
-			"CorrectDuplIDs": CorrectDuplIDs(),
 			"Correct": Correct(),
 			"JoinCrossRef": JoinCrossRef(),
 			"Merge": Merge(),

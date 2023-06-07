@@ -175,24 +175,6 @@ class CorrectContradict:
 		}
 
 
-class CorrectDuplIDs:
-
-	def run(self, dataFrames, spark):
-		df_works = dataFrames["works"]
-		df_persons = dataFrames["persons"]
-		
-		df_works_unique = df_works.dropDuplicates(["doi"])	\
-								  .dropDuplicates(["bibtex"])	\
-								  .dropDuplicates(["orcid_publication_id"])
-		
-		df_persons_unique = df_persons.dropDuplicates(["id"])
-		
-		return {
-			"works": df_works_unique,
-			"persons": df_persons_unique
-		}
-
-
 
 class Correct:
 	def run(self, dataFrames, spark):
@@ -200,7 +182,6 @@ class Correct:
 		dataFrames.update(CorrectMinLength().run(dataFrames, spark))		
 		dataFrames.update(CorrectValues().run(dataFrames, spark))		
 		dataFrames.update(CorrectContradict().run(dataFrames, spark))
-		dataFrames.update(CorrectDuplIDs().run(dataFrames, spark))
 		
 		return dataFrames
 	
