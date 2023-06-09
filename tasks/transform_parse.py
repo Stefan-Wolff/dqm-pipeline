@@ -121,8 +121,8 @@ class ParseValues:
 
 	FOREIGN = {
 		"issn": r'(?<=([iI][sS][sS][nN][^a-z^A-Z]))(((977)-\d{3}-\d{4}-\d{2}-\d)|(\d{4}-\d{3}[0-9xX]))',
-		"isbn": r'(?<=([iI][sS][bB][nN][^a-z^A-Z]))(([0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9X])|(97[89][-\ ]?[0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9]))',
-		"doi": r'(?<=([dD][oO][iI][^a-z^A-Z]))(10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+)'
+		"isbn": r'(?<=([iI][sS][bB][nN](([ :\-.]?(10|13)[ :\-.]?)|[ :\-.])))((97[89][\-]?)?([0-9][-]?){8}[0-9]([-]?[0-9xX]))',
+		"doi": r'(?<=([dD][oO][iI][ :\-.]))(10[.][0-9]{4,}[^\s"\/<>]*\/[^\s"<>]+)'
 	}
 
 	def run(self, dataFrames, spark):
@@ -133,9 +133,11 @@ class ParseValues:
 		# lookup in foreign fields
 		for field, pattern in ParseValues.FOREIGN.items():
 			df_parsed = df_parsed.withColumn("foreign", lit(""))
-			for foreign in ["doi", "url", "isbn", "subTitle", "journal_title", "title"]:
+			for foreign in ["doi", "url", "isbn", "issn", "subTitle", "journal_title", "title"]:
+				if field == foreign:
+					continue
 				df_parsed = df_parsed.withColumn("foreign", when(col(foreign).isNotNull() & (col("foreign") == ""),	\
-																regexp_extract(foreign, pattern, 0))	\
+																 regexp_extract(foreign, pattern, 0))	\
 															.otherwise(col("foreign")))
 																
 			df_parsed = df_parsed.withColumn(field, when((col(field).isNull() | (col(field) == "")) & (col("foreign") != ""), col("foreign")).otherwise(col(field)))
@@ -148,6 +150,7 @@ class ParseValues:
 
 class Parse:
 	def run(self, dataFrames, spark):
-		dataFrames.update(ParseValues().run(dataFrames, spark))		
-		return ParseBibtex().run(dataFrames, spark)
+		dataFrames.update(ParseBibtex().run(dataFrames, spark))
+		dataFrames.update(ParseValues().run(dataFrames, spark))
+		return dataFrames
 	

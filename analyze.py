@@ -53,7 +53,7 @@ class Analyzer(DataProcessor):
 			"indicators": results
 		})
 			
-		with open('repo/quality.json', 'w') as outFile:
+		with open(Analyzer.REPO_FILE, 'w') as outFile:
 			json_string = json.dumps(repo, indent=4)
 			outFile.write(json_string)
 

@@ -97,10 +97,10 @@ class CorrectValues:
 		df_persons_cor = df_persons
 		
 		# issn
-		df_works_cor = df_works_cor.withColumn("issn_replaced", regexp_replace(regexp_replace("issn", r'([iI][sS][sS][nN])| ', ''), r'[./_]', '-'))	\
+		df_works_cor = df_works_cor.withColumn("issn_replaced", regexp_replace(regexp_replace("issn", r'([iI][sS][sS][nN][ :\-.]?)|[ ]', ''), r'[./_]', '-'))	\
 								   .withColumn("issn", when(col("issn_replaced").rlike(CorrectValues.ISSN), col("issn_replaced")).otherwise(lit(None)))				
 		# isbn
-		df_works_cor = df_works_cor.withColumn("isbn_replaced", regexp_replace(regexp_replace("isbn", r'([iI][sS][bB][nN])| ', ''), r'[./_]', '-'))	\
+		df_works_cor = df_works_cor.withColumn("isbn_replaced", regexp_replace(regexp_replace("isbn", r'([iI][sS][bB][nN](([ :\-.]?(10|13)[ :\-.]?)|[ :\-.]?))|[ ]', ''), r'[./_]', '-'))	\
 								   .withColumn("isbn", when(col("isbn_replaced").rlike(CorrectValues.ISBN), col("isbn_replaced")).otherwise(lit(None)))
 		# url
 		df_works_cor = df_works_cor.withColumn("url_replaced", regexp_replace("url", r'[\\ ]', ''))	\
