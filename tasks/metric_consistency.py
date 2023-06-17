@@ -90,9 +90,11 @@ class UniqueObject(Metric):
 	def _calc(self, dataFrames, spark):
 		df_works = dataFrames["works"]
 		
-		cust_key = udf(lambda title, date, authors, publ_id: WorksKey().build(title, date, authors, publ_id))
+		cust_key = udf(lambda title, date, authors: WorksKey().build(title, date, authors))
 		df_key = df_works.where(col("title").isNotNull() & col("date").isNotNull() & col("authors").isNotNull())	\
-						 .withColumn("key", cust_key(col("title"), col("date"), col("authors"), col("orcid_publication_id")))	\
+						 .withColumn("key", when(col("title").isNotNull() & col("date").isNotNull() & col("authors").isNotNull(),	\
+													cust_key(col("title"), col("date"), col("authors")))	\
+												.otherwise(col("orcid_publication_id")))	\
 						 .select("key")	\
 						 .distinct()
 						 

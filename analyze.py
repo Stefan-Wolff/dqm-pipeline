@@ -64,7 +64,7 @@ class Analyzer(DataProcessor):
 if "__main__" == __name__:
 
 	# init parameters
-	parser = argparse.ArgumentParser(prog='Data Analyzer', description='Run metrics and show samples of invalid data')
+	parser = argparse.ArgumentParser(prog='Data Analyzer', description='Run metrics')
 	parser.add_argument('-m', '--metrics', help='names of metrics to run', action="extend", nargs="+", required=True)
 	parser.add_argument('-c', '--chain', help='source chain if analyze transformed data', default='initial')
 					
