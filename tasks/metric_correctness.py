@@ -11,7 +11,6 @@ class Correctness(Metric):
 	INVALID_TEXT = r'(<[a-zA-Z/]+>)|(^[^a-zA-Z0-9]+)|([^a-zA-Z0-9.!?"\'\)]+$)|(^[nk][\./]?[na][\./]?$)|(  )'						# used in transform_correct
 	INVALID_NAMES = r'[\(\)/\t0-9]+'
 	INVALID_ABSTRACT = r'^[Aa][Bb][Ss][Tt][Rr][Aa][Cc][Tt]'
-	ORCID_ID = r'^([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X])'
 
 	# 1800-2023
 	YEAR_1800 = r'(1[8-9][0-9]{2})|(20)(([0-1][0-9])|(2[0-' + str(datetime.now().year)[-1] + ']))'
@@ -20,7 +19,7 @@ class Correctness(Metric):
 	CONFIG = {
 		"works": {
 			"bibtex":				{"pattern": r'^(@[a-zA-Z]+[\s]*\{[\S\s]*\})$'},
-			"orcid_id":				{"pattern": ORCID_ID},
+			"orcid_id":				{"pattern": r'^([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9|X])$'},
 			"orcid_publication_id":	{"pattern": r'^([0-9]+)$'},
 			"date":					{"pattern": r'^((' + YEAR_1800 + ')(-[0-9]{2}(-[0-9]{2})?)?)$'},
 			"url":					{"pattern": r'^(((http[s]?://)?[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_\(\)#]*)?\??(?:[-\+~=&;%@.\w_:,/\(\)]*)#?(?:[-\+=&;%@.\w_:,/\(\)]*))?)$'},		# used in transform_correct

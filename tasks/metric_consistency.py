@@ -1,5 +1,5 @@
 from lib.metrics import Metric, Aggregation
-from pyspark.sql.functions import explode, udf, col
+from pyspark.sql.functions import explode, udf, col, when
 from pyspark.sql.types import StringType
 from lib.duplicates import WorksKey
 
