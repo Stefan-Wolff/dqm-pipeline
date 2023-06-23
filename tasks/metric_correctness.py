@@ -4,7 +4,7 @@ from pyspark.sql.types import IntegerType, ArrayType
 from lib.metrics import Metric
 
 
-class Correctness(Metric):
+class CorrectValue(Metric):
 
 	# chinese, japanese, korean, cyrillic
 	INVALID_ALPHABET = r'[\u4e00-\u9FFF\u3040-\u30ff\uac00-\ud7a3а-яА-Я]'
@@ -149,3 +149,6 @@ class Correctness(Metric):
 		
 		
 		
+# aggregation class is the same class as the metric, because there is only one metric
+class Correctness(CorrectValue):
+	pass

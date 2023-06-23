@@ -24,13 +24,13 @@ class WorksKey:
 		result = ""
 		
 		if "firstName" in author and "lastName" in author:
-			return lastName + ", " + firstName[0]
+			result = self.__formateName(author["lastName"] + ", " + author["firstName"])
 			
 		elif "otherNames" in author:
-			return self.__formateName(author["otherNames"])
+			result = self.__formateName(author["otherNames"])
 			
 		elif "publishedName" in author:
-			return self.__formateName(author["publishedName"])
+			result = self.__formateName(author["publishedName"])
 			
 		return result
 		
@@ -39,13 +39,13 @@ class WorksKey:
 		name_parts = name.split(",")
 		if 1 == len(name_parts):
 			name_parts.split(" ")
-			name_parts.name_parts()
+			name_parts.reverse()
 			
-		return name_parts[0] + ", " + name_parts[-1]
+		return name_parts[0].strip() + ", " + name_parts[-1].strip()
 	
 	
 	def __unify(self, value):
-		result = re.sub(r'[,;:]', '.', value)
+		result = re.sub(r'[,;:]', '.', value.lower())
 		result = re.sub(r'[ ]+', ' ', result)
 		result = re.sub(r'^ | $|[\'"´`]', '', result)
 
