@@ -3,3 +3,5 @@ check*.py
 data
 repo
 **/__pycache__
+analyze.sh
+

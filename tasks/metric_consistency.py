@@ -1,7 +1,7 @@
 from lib.metrics import Metric, Aggregation
-from pyspark.sql.functions import explode, udf, col, when
+from pyspark.sql.functions import explode
 from pyspark.sql.types import StringType
-from lib.duplicates import WorksKey
+from lib.duplicates import groupDuplicates
 
 
 class UniqueValue(Metric):
@@ -90,13 +90,9 @@ class UniqueObject(Metric):
 	def _calc(self, dataFrames, spark):
 		df_works = dataFrames["works"]
 		
-		cust_key = udf(lambda title, date, authors: WorksKey().build(title, date, authors))
-		df_key = df_works.where(col("title").isNotNull() & col("date").isNotNull() & col("authors").isNotNull())	\
-						 .withColumn("key", when(col("title").isNotNull() & col("date").isNotNull() & col("authors").isNotNull(),	\
-													cust_key(col("title"), col("date"), col("authors")))	\
-												.otherwise(col("orcid_publication_id")))	\
-						 .select("key")	\
-						 .distinct()
+		df_key = groupDuplicates(df_works) \
+					.select("key")	\
+					.distinct()
 						 
 						 
 		return {"works": df_key.count() / df_works.count()}

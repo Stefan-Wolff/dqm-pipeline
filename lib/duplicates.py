@@ -1,4 +1,5 @@
 import re
+from pyspark.sql.functions import udf, when, col
 
 
 class WorksKey:
@@ -50,3 +51,12 @@ class WorksKey:
 		result = re.sub(r'^ | $|[\'"´`]', '', result)
 
 		return result.translate(WorksKey.NORM_CHARS)
+		
+		
+		
+def groupDuplicates(df_works):
+		# group by doi OR title#year#authors OR orcid_publication_id
+		cust_key = udf(lambda title, date, authors: WorksKey().build(title, date, authors))
+		return df_works.withColumn("key", when(col("title").isNotNull() & col("date").isNotNull() & col("authors").isNotNull(),	\
+												cust_key(col("title"), col("date"), col("authors")))	\
+											.otherwise(col("orcid_publication_id")))
