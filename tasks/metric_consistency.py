@@ -121,4 +121,4 @@ class Consistency(Aggregation):
 		result.update(NoContradict().calc(dataFrames, spark))
 		result.update(UniqueObject().calc(dataFrames, spark))
 		
-		return result
+		return self._formateResult(result)
