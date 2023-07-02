@@ -4,6 +4,7 @@ import argparse
 from tasks.metric_completeness import *
 from tasks.metric_correctness import *
 from tasks.metric_consistency import *
+from tasks.entry_count import *
 from datetime import datetime
 from lib.data_processor import DataProcessor
 
@@ -37,6 +38,8 @@ class Analyzer(DataProcessor):
 
 		print(results)
 
+
+
 		# save results
 		repo = []
 		
@@ -50,6 +53,7 @@ class Analyzer(DataProcessor):
 			"time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
 			"metrics": ",".join(config.metrics),
 			"chain": config.chain,
+			"counts": CountEntries().calc(dataFrames, spark),
 			"indicators": results
 		})
 			

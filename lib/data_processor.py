@@ -30,9 +30,9 @@ class DataProcessor:
 			# build path stack, to look behind for last written dataframe of current entity
 			chain_nodes = config.chain.split(".")
 			chain_stack = []
-			for node in reversed(list(chain_nodes)):
+			for i in reversed(range(0, len(chain_nodes))):
 				chain_stack.append(".".join(chain_nodes))
-				chain_nodes.remove(node)
+				del chain_nodes[i]
 			
 			chain_stack.append("initial")
 			
