@@ -1,7 +1,8 @@
 *.log
 check*.py
 data
-repo
+repo/*
+!repo/quality_ORCID_2023.json
 **/__pycache__
 analyze.sh
 
