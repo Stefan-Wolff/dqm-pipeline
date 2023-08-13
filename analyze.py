@@ -20,6 +20,7 @@ class Analyzer(DataProcessor):
 		"MinPopulation": MinPopulation(),
 		"MinObject": MinObject(),
 		"Completeness" : Completeness(),
+		"CorrectValue": CorrectValue(),
 		"Correctness": Correctness(),
 		"UniqueValue": UniqueValue(),
 		"NoContradict": NoContradict(),
@@ -70,7 +71,7 @@ if "__main__" == __name__:
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Data Analyzer', description='Run metrics')
 	parser.add_argument('-m', '--metrics', help='names of metrics to run', action="extend", nargs="+", required=True)
-	parser.add_argument('-c', '--chain', help='source chain if analyze transformed data', default='initial')
+	parser.add_argument('-c', '--chain', help='the source data related to the transformation chain', default='initial')
 					
 
 	Analyzer().run(parser.parse_args())

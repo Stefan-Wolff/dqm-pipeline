@@ -30,7 +30,7 @@ if "__main__" == __name__:
 	parser.add_argument('-e', '--entity', help='the entity to print', choices=['persons', 'works', 'orgUnits'], required=True)
 	parser.add_argument('-a', '--attribute', help='the attribute to print', required=True)
 	parser.add_argument('-d', '--desc', help='desc order', action='store_true')
-	parser.add_argument('-c', '--chain', help='source chain if analyze transformed data', default='initial')
+	parser.add_argument('-c', '--chain', help='the source data related to the transformation chain', default='initial')
 					
 
 	Sampler().run(parser.parse_args())

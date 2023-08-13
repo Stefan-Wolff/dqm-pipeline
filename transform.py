@@ -81,6 +81,6 @@ if "__main__" == __name__:
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Data Transformer', description='Runs given transformation')
 	parser.add_argument('-t', '--transformation', help='the transformation to run', default='complete')
-	parser.add_argument('-c', '--chain', help='source chain if analyze transformed data', default='initial')
+	parser.add_argument('-c', '--chain', help='the source data related to the transformation chain', default='initial')
 					
 	Transformer().run(parser.parse_args())
