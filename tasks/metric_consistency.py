@@ -1,3 +1,5 @@
+"""Metric implementations of the quality dimension 'consistency'"""
+
 from lib.metrics import Metric, Aggregation
 from pyspark.sql.functions import explode
 from pyspark.sql.types import StringType

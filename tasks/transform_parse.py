@@ -1,3 +1,5 @@
+"""Parse values text data and bibtex encoded data"""
+
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
 from pylatexenc.latex2text import LatexNodes2Text

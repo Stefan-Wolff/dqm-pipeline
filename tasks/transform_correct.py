@@ -1,8 +1,10 @@
+"""Data correction transformations"""
+
+import re
 from pyspark.sql.functions import lit, col, regexp_replace, length, when, udf
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from .metric_correctness import Correctness
 from .metric_completeness import MinLength
-import re
 
 				
 class CorrectOrgs:

@@ -1,6 +1,7 @@
-#
+"""Supports the calculation of specific metrics"""
 
 class Metric:
+	"""This class supports the aggregation of indicators."""
 	
 	def getName(self):
 		return type(self).__name__
@@ -31,6 +32,8 @@ class Metric:
 			
 
 class Aggregation(Metric):
+	"""This class aggregates indiciators, which are already aggregated (on the next level, i. e. the level of the data quality dimension)"""
+
 	def _formateResult(self, calc_result):
 		result = dict(calc_result)
 		weights = self._weights()

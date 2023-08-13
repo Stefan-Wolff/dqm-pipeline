@@ -7,11 +7,13 @@ OUT_FILE = "data/ROR.csv"
 TMP_DIR = "data/tmp/"
 
 
-def run(toDownload):
+def run():
+	# download data
 	os.system("mkdir -p " + TMP_DIR)
 	fileName = SOURCE_URL.split("/")[-1]
 	os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
 		
+	# extract and save data
 	with zipfile.ZipFile(TMP_DIR + fileName, 'r') as zip_ref:
 		for member in zip_ref.namelist():
 			if member.endswith(".csv"):
@@ -20,7 +22,8 @@ def run(toDownload):
 				print(OUT_FILE, " loaded")			
 				break
 
+	# clean up temp file
 	os.remove(TMP_DIR + fileName)
 
 if "__main__" == __name__:
-	run(True)
+	run()

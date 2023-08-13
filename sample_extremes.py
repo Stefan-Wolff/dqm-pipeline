@@ -4,6 +4,8 @@ from lib.data_processor import DataProcessor
 
 
 class Sampler(DataProcessor):
+	"""Prints data samples of extrem values"""
+
 	def _run(self, dataFrames, config, spark):
 		dataFrame = dataFrames[config.entity]
 	
@@ -23,7 +25,6 @@ class Sampler(DataProcessor):
 
 
 if "__main__" == __name__:
-
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Sample Printer', description='Show samples of all data')
 	parser.add_argument('-n', '--sample_num', help='the number of samples to print', default=1000, type=int)

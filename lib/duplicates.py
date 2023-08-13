@@ -1,3 +1,4 @@
+"""This library supports the deduplication process by grouping and normalizing duplicate publications"""
 import re
 from pyspark.sql.functions import udf, when, col
 

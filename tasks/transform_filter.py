@@ -1,3 +1,5 @@
+"""Filtering of data not fullfilling required data quality"""
+
 from pyspark.sql.functions import udf, col
 from .transform_correct import CorrectValues
 

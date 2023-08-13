@@ -1,3 +1,5 @@
+"""Metric implementations of the quality dimension 'correctness'"""
+
 from datetime import datetime
 from pyspark.sql.functions import explode, year
 from pyspark.sql.types import IntegerType, ArrayType
@@ -148,7 +150,7 @@ class CorrectValue(Metric):
 		return result
 		
 		
-		
-# aggregation class is the same class as the metric, because there is only one metric
+
 class Correctness(CorrectValue):
+	"""Aggregation class is the same class as the metric, because there is only one metric"""
 	pass

@@ -1,3 +1,5 @@
+"""Data enriching using external data from Crossref"""
+
 from pyspark.sql.functions import when, lit, explode
 		
 		

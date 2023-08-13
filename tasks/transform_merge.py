@@ -1,3 +1,5 @@
+"""Merging duplicate records"""
+
 from lib.duplicates import groupDuplicates
 from pyspark.sql.functions import col, max, explode
 

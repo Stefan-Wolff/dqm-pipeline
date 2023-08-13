@@ -14,7 +14,7 @@ OUT_DIR = "data/CrossRef/"
 TMP_DIR = "data/tmp/CrossRef/"
 RESULT_NUM = 32
 
-### functions
+
 def formate_authors(authors, doi):
 	result = []
 	
@@ -77,7 +77,7 @@ def fetch_data(record):
 	return result
 	
 
-def transform(data):
+def extract_data(data):
 	outFile = OUT_DIR + str(data["index"]) + ".json.gz"
 	logging.info("start " + outFile)
 	
@@ -91,14 +91,13 @@ def transform(data):
 
 	logging.info(outFile, " done")
 	
-	
-### main
+
 def run():
 	# harvest data
 	os.system("mkdir -p " + OUT_DIR)
 	os.system("rm " + OUT_DIR + "*")
-	#os.system("mkdir -p " + TMP_DIR)
-	#os.system("aria2c data/April2022Crossref.torrent --seed-time=0 -d " + TMP_DIR)
+	os.system("mkdir -p " + TMP_DIR)
+	os.system("aria2c data/April2022Crossref.torrent --seed-time=0 -d " + TMP_DIR)
 	
 	# organize source files
 	for entry in os.listdir(TMP_DIR):
@@ -123,17 +122,17 @@ def run():
 					i = 0
 					
 					
-	# transform
+	# extract data in multiple threads
 	with multiprocessing.Pool(RESULT_NUM) as pool:
-		pool.map(func=transform, iterable=ordered_sources)
+		pool.map(func=extract_data, iterable=ordered_sources)
 
 
-	#os.system("rm -f -r " + TMP_DIR)
+	# cleanup temp dir
+	os.system("rm -f -r " + TMP_DIR)
 	
 	print(".. finished")
 
 
-### entry
 if "__main__" == __name__:
 	try:
 		run()

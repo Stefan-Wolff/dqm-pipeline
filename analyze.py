@@ -10,6 +10,7 @@ from lib.data_processor import DataProcessor
 
 
 class Analyzer(DataProcessor):
+	"""Runs specified tasks for data analyzing and stores the results"""
 
 	REPO_FILE = "repo/quality.json"
 
@@ -36,10 +37,7 @@ class Analyzer(DataProcessor):
 				metric_results = metric.calc(dataFrames, spark)
 				results.update(metric_results)
 					
-
 		print(results)
-
-
 
 		# save results
 		repo = []
@@ -65,9 +63,7 @@ class Analyzer(DataProcessor):
 
 
 
-### entry
 if "__main__" == __name__:
-
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Data Analyzer', description='Run metrics')
 	parser.add_argument('-m', '--metrics', help='names of metrics to run', action="extend", nargs="+", required=True)

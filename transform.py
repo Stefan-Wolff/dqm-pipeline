@@ -8,6 +8,7 @@ from lib.data_processor import DataProcessor
 
 
 class Transformer(DataProcessor):
+	"""Runs a specific task of data transformation and stores the result data"""
 
 	FULL_CHAIN = [
 		"ParseBibtex",
@@ -75,9 +76,7 @@ class Transformer(DataProcessor):
 	
 	
 
-### entry
 if "__main__" == __name__:
-
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Data Transformer', description='Runs given transformation')
 	parser.add_argument('-t', '--transformation', help='the transformation to run', default='complete')

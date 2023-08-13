@@ -1,9 +1,10 @@
-# support xml parsing
+""" Supports XML parsing"""
 import xml.sax
 from collections import deque
 
 
 class XMLHandler(xml.sax.ContentHandler):
+	"""An XML parser, which can be configured to read specific data."""
 
 	def __init__(self, searchFor):		
 		self.searchFor = searchFor
@@ -91,6 +92,8 @@ class XMLHandler(xml.sax.ContentHandler):
 
 
 class Parser:
+	"""Wrappes the XML parser to simplify the handling"""
+
 	def __init__(self):
 		self.parser = xml.sax.make_parser()
 		self.parser.setFeature(xml.sax.handler.feature_namespaces, 0)

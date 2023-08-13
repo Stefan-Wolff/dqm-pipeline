@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-#
-# requires: pip install wget
-
 import os
 import sys
 import json
@@ -15,6 +11,7 @@ SOURCE_FILES = "data/orcid_works_2022.lsv"
 OUT_DIR_RAW = "data/ORCID_works_raw/"
 OUT_DIR = "data/ORCID_works"
 
+# the configuration for XML parsing using lib.xml_parse.XMLHandler
 SEARCH_FOR = {
 	"/work:work/work:title/common:title": {"elementName": "title"},
 	"/work:work/work:title/common:subtitle": {"elementName": "subTitle"},
@@ -52,8 +49,8 @@ SEARCH_FOR = {
 }
 
 
-### classes
 class PublicationHandler(lib.xml_parse.XMLHandler):		
+	"""This sub class extends the parsing process to handle specific data constellations"""
 	
 	AUTHOR_ROLES = ["author", "http://credit.niso.org/contributor-roles/writing-original-draft/"]
 	
@@ -124,25 +121,26 @@ class PublicationHandler(lib.xml_parse.XMLHandler):
 		super().endElement(tag)
 			
 			
-### functions
-def process_source(config):
-	fileName_local = config["url"].strip().split("/")[-1]
-	fileName = fileName_local + ".gz"
+
+def process_source(url):
+	fileName_local = url.strip().split("/")[-1]
+	gzFileName = fileName_local + ".gz"
 	
 	count = 0
 	
-	print("\t process source: " + fileName)
+	print("\t process source: " + gzFileName)
 	
 	parser = lib.xml_parse.Parser()
 	
-	if config["toDownload"]:
-		os.system("mkdir -p " + OUT_DIR)
-		os.system("mkdir -p " + OUT_DIR_RAW)
-		os.system("wget -O " + OUT_DIR_RAW + fileName + " " + config["url"])
+	# download data
+	os.system("mkdir -p " + OUT_DIR)
+	os.system("mkdir -p " + OUT_DIR_RAW)
+	os.system("wget -O " + OUT_DIR_RAW + gzFileName + " " + url)
 	
+	# extract and save data
 	with gzip.open(OUT_DIR + "/works_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outWorks:
 		with gzip.open(OUT_DIR + "/authors_"+fileName_local+".jsonl.gz", 'wt', encoding='utf-8') as outAuthors:
-			with tarfile.open(OUT_DIR_RAW + fileName, 'r:gz') as tar:
+			with tarfile.open(OUT_DIR_RAW + gzFileName, 'r:gz') as tar:
 				for member in tar:
 					if "_works_" in member.name:
 						handler = PublicationHandler(SEARCH_FOR)
@@ -169,22 +167,28 @@ def process_source(config):
 
 						count += 1
 					
-	print("\t .. source " + fileName + " done: " + str(count) + " records")
+	print("\t .. source " + gzFileName + " done: " + str(count) + " records")
+	
+	
+	# clean up temp file
+	os.system("rm " + OUT_DIR_RAW + gzFileName)
 					
 	return count
 
 
-### main
-def run(toDownload):
+
+def run():
 	print("start transforming publications ..")
 	
+	# load source addresses
 	count = 0
 	queue = []
 	with open(SOURCE_FILES, 'r', newline='') as inFile:
 		for url in inFile:
-			queue.append({"url": url, "toDownload": toDownload})
+			queue.append(url)
 
 
+	# download and extract data in multiple threads
 	with multiprocessing.Pool(len(queue)) as pool:
 		results = pool.map(process_source, queue)
 
@@ -196,6 +200,6 @@ def run(toDownload):
 	print(str(result_sum) + " publications transformed")
 	
 
-### entry
+
 if "__main__" == __name__:
-	run(False)
+	run()

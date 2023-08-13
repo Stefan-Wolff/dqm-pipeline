@@ -1,3 +1,5 @@
+"""Metric implementations of the quality dimension 'completeness'"""
+
 from lib.metrics import Metric, Aggregation
 from pyspark.sql.functions import length, array_contains, substring
 from datetime import datetime

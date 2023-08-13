@@ -3,6 +3,7 @@ import json
 
 
 class Monitor():
+	"""Creates diffs of the quality indicators to support the monitoring process"""
 
 	QUALITY_FILE = "repo/quality_0.json"
 	MONITOR_FILE = "repo/monitor.json"
@@ -72,6 +73,6 @@ class Monitor():
 		return result
 
 
-### entry
+
 if "__main__" == __name__:
 	Monitor().run()

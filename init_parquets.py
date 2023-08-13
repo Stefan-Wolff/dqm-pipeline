@@ -3,8 +3,14 @@ from pyspark.sql import SparkSession
 import json
 
 
-### main
+OUT_PATH = "data/parquets/initial/"
+SCHEMES_PATH = "data/schemes/"
+SOURCES_CONFIG = "repo/sources.json"
+
+
 def run(config):
+	"""Reads the source data of a specified entity, and saves the data in parquet format."""
+
 	# init spark session
 	spark = SparkSession	\
 				.builder	\
@@ -13,7 +19,7 @@ def run(config):
 
 
 	# read source config
-	with open('repo/sources.json', 'r', encoding='utf-8') as inFile:
+	with open(SOURCES_CONFIG, 'r', encoding='utf-8') as inFile:
 		sources = json.load(inFile)
 	
 	
@@ -28,18 +34,17 @@ def run(config):
 		dataFrame = spark.read.csv(path, header=True) if (".csv" in path) else spark.read.json(path)
 			
 		# save schema
-		with open('data/schemes/' + name + ".schema", 'w') as f:
+		with open(SCHEMES_PATH + name + ".schema", 'w') as f:
 			f.write(dataFrame.schema.json())
 		
 		# save parquet
-		dataFrame.write.parquet("data/parquets/initial/" + name, mode="overwrite")
+		dataFrame.write.parquet(OUT_PATH + name, mode="overwrite")
 		
 		print(".. " + name + " done")
 
 
-### entry
-if "__main__" == __name__:
 
+if "__main__" == __name__:
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Parquet initializer', description='Initializes the data in parquet format.')
 	parser.add_argument('-e', '--entity', help='limit to a single entity')

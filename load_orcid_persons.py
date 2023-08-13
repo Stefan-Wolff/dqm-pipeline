@@ -1,4 +1,3 @@
-#
 import os
 import sys
 import logging
@@ -18,6 +17,7 @@ TMP_DIR = "data/tmp/"
 OUT_FILE = "data/ORCID_persons.jsonl.gz"
 ORG_FILE = "data/ORCID_orgUnits.jsonl.gz"
 
+# the configuration for XML parsing using lib.xml_parse.XMLHandler
 SEARCH_FOR = {
 	"/record:record/person:person/person:name/personal-details:given-names": {"elementName": "firstName"},
 	"/record:record/person:person/person:name/personal-details:family-name": {"elementName": "lastName"},
@@ -57,7 +57,7 @@ SEARCH_FOR = {
 	}
 }
 		
-### functions
+
 def isolate_orgUnit(affil):
 	result = {}
 	
@@ -77,16 +77,18 @@ def isolate_orgUnit(affil):
 	return result
 	
 
-### main
 def run():
 	logging.info("start transforming persons ...")
 
 	localName = SOURCE_URL.strip().split("/")[-1]
 	fileName = localName + ".gz"
 
+	# download data
 	os.system("mkdir -p " + TMP_DIR)
-	#os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
+	os.system("wget -O " + TMP_DIR + fileName + " " + SOURCE_URL)
 
+
+	# parse and save data
 	count = 0
 	tar = tarfile.open(TMP_DIR + fileName)
 	parser = lib.xml_parse.Parser()
@@ -120,13 +122,12 @@ def run():
 					
 					count += 1
 
-	
-	#os.system("rm " + TMP_DIR + fileName)
+	# clean up temp file
+	os.system("rm " + TMP_DIR + fileName)
 	
 	logging.info(".. " + str(count) + " persons transformed")
 
 
-### entry
 if "__main__" == __name__:
 	try:
 		run()

@@ -11,10 +11,11 @@ TMP_FILE = TMP_DIR + "LEI.zip"
 
 
 def run():
+	# download data
 	os.system("mkdir -p " + TMP_DIR)
 	os.system("wget -O " + TMP_FILE + " " + SOURCE_URL)
 		
-			
+	# extract and save data
 	with zipfile.ZipFile(TMP_FILE, 'r') as zip_ref:
 		with zip_ref.open(zip_ref.namelist()[0], 'r') as xmlFile:
 			with open(OUT_FILE, 'w', encoding='utf-8') as csvOut:
@@ -35,6 +36,7 @@ def run():
 				
 				print(count, "lei records written to " + OUT_FILE)
 
+	# clean up temp file
 	os.remove(TMP_FILE)
 
 if "__main__" == __name__:
