@@ -5,6 +5,7 @@
         "chain": "initial",
         "counts": {
             "persons": 4162339161,
+			"affiliations": 3472114,
             "works": 88125487,
             "orgUnits": 1249027
         },
@@ -66,6 +67,7 @@
         "chain": "initial",
         "counts": {
             "persons": 4162339161,
+			"affiliations": 3472114,
             "works": 88125487,
             "orgUnits": 1249027
         },
@@ -99,6 +101,7 @@
         "chain": "initial",
         "counts": {
             "persons": 4162339161,
+			"affiliations": 3472114,
             "works": 88125487,
             "orgUnits": 1249027
         },
@@ -1835,6 +1838,7 @@
         "chain": "complete",
         "counts": {
             "persons": 418086524,
+			"affiliations": 798777,
             "works": 49154772,
             "orgUnits": 1249027
         },
@@ -1896,6 +1900,7 @@
         "chain": "complete",
         "counts": {
             "persons": 418086524,
+			"affiliations": 798777,
             "works": 49154772,
             "orgUnits": 1249027
         },
@@ -1929,6 +1934,7 @@
         "chain": "complete",
         "counts": {
             "persons": 418086524,
+			"affiliations": 798777,
             "works": 49154772,
             "orgUnits": 1249027
         },
