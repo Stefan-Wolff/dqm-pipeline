@@ -1,0 +1,10 @@
+{
+	"persons": ["data/input/ORCID_persons.jsonl.gz", "data/input/ORCID_works/authors_*"],
+	"works": "data/input/ORCID_works/works_*",
+	"orgUnits": "data/input/ORCID_orgUnits.jsonl.gz",
+	"crossRef": "data/input/CrossRef/*",
+	"orgUnits": "data/input/ORCID_orgUnits.jsonl.gz",
+	"lei": "data/input/LEI.csv",
+	"ROR": "data/input/ROR.csv",
+	"fundref": "data/input/FUNDREF.csv"
+}
