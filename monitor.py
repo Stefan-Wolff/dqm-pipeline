@@ -5,7 +5,7 @@ import json
 class Monitor():
 	"""Creates diffs of the quality indicators to support the monitoring process"""
 
-	QUALITY_FILE = "repo/quality_0.json"
+	QUALITY_FILE = "repo/quality.json"
 	MONITOR_FILE = "repo/monitor.json"
 
 	def run(self):
@@ -27,6 +27,14 @@ class Monitor():
 			ordered[data_name].setdefault(entry["metrics"], [])
 			ordered[data_name][entry["metrics"]].append(entry)
 			
+			
+		# check if there are enough quality measurements in the quality.json
+		for dim in ["Completeness", "Correctness", "Consistency"]:
+			for data_state in ["initial", "complete"]:
+				if 2 > len(ordered[data_state][dim]):
+					print("Monitoring failed because of missing quality measurements of " + data_state + " data for quality dimension ", dim)
+					return
+					
 
 		# build diffs
 		for dim in ["Completeness", "Correctness", "Consistency"]:
@@ -36,12 +44,12 @@ class Monitor():
 		for dim in ["Completeness", "Correctness", "Consistency"]:
 			increase_before = self._createDiff(ordered["initial"][dim][-2], ordered["complete"][dim][-2])
 			increase_before["time"] = increase_before["time_2"]
-			increase_before["metrics"] = increase_before["metrics_2"]
+			increase_before["metrics"] = increase_before["metrics"]
 			increase_before["chain"] = "diff:" + increase_before["chain_1"] + "-" + increase_before["chain_2"]
 			
 			increase_last = self._createDiff(ordered["initial"][dim][-1], ordered["complete"][dim][-1])
 			increase_last["time"] = increase_last["time_2"]
-			increase_last["metrics"] = increase_last["metrics_2"]
+			increase_last["metrics"] = increase_last["metrics"]
 			increase_last["chain"] = "diff:" + increase_last["chain_1"] + "-" + increase_last["chain_2"]
 			
 			monitor.append(self._createDiff(increase_before, increase_last))
