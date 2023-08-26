@@ -112,7 +112,8 @@ class CorrectValue(Metric):
 						df_valid = df_valid.where(~df_valid[attr].rlike(antipattern))
 					
 				
-				result[entity + "." + field] = df_valid.count() / df_notNull.count()
+				notNull_count = df_notNull.count()
+				result[entity + "." + field] = df_valid.count() / notNull_count if (0 != notNull_count) else 0
 		
 
 		# orgUnits.name
@@ -142,8 +143,8 @@ class CorrectValue(Metric):
 													 (df_notNull["name"] != df_right["r_" + config["name_field"]]) \
 											, 'inner')
 													 
-														 
-			indicator += 1 - df_incorrect.count() / df_notNull.count()
+			notNull_count = df_notNull.count()
+			indicator += 1 - df_incorrect.count() / notNull_count if (0 != notNull_count) else 0
 
 		result["orgUnits.name"] = indicator / len(sources)
 

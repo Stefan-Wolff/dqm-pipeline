@@ -53,7 +53,8 @@ class MinLength(Metric):
 			df_notNull = df.where(df[field].isNotNull())
 			df_valid = df_notNull.where(minNum <= length(df_notNull[field]))
 			
-			result[key] = df_valid.count() / df_notNull.count()
+			notNull_count = df_notNull.count()
+			result[key] = df_valid.count() / notNull_count if (0 != notNull_count) else 0
 		
 		return result
 
@@ -74,7 +75,8 @@ class MinValue(Metric):
 		df_notNull = df_works.where(df_works["date"].isNotNull())
 		df_valid = df_notNull.where(10 == length("date"))
 		
-		result["works.date"] = df_valid.count() / df_notNull.count()
+		notNull_count = df_notNull.count()
+		result["works.date"] = df_valid.count() / notNull_count if (0 != notNull_count) else 0
 			
 			
 		return result
@@ -138,7 +140,7 @@ class NotNull(Metric):
 			
 			for col in dataFrame.columns:
 				df_valid = dataFrame.where(dataFrame[col].isNotNull())
-				result[entity + "." + col] = df_valid.count() / row_num
+				result[entity + "." + col] = df_valid.count() / row_num if (0 != row_num) else 0
 
 		return result
 	
@@ -216,7 +218,7 @@ class MinObject(Metric):
 		works_num = df_works.count()
 		df_works_valid = df_works.where(df_works["title"].isNotNull() & \
 										(df_works["url"].isNotNull() | df_works["doi"].isNotNull()))
-		result["works"] = df_works_valid.count() / works_num
+		result["works"] = df_works_valid.count() / works_num if (0 != works_num) else 0
 
 		# persons
 		persons_num = df_persons.count()
@@ -224,7 +226,7 @@ class MinObject(Metric):
 												((df_persons["firstName"].isNotNull() & df_persons["lastName"].isNotNull()) | \
 												df_persons["publishedName"].isNotNull() | \
 												df_persons["otherNames"].isNotNull()))
-		result["persons"] = df_persons_valid.count() / persons_num
+		result["persons"] = df_persons_valid.count() / persons_num if (0 != persons_num) else 0
 			
 
 		return result
