@@ -14,17 +14,28 @@ The project requires [Python](https://www.python.org/) 3.8 or above and proposes
 In addition it uses [Apache Spark](https://spark.apache.org/), which is implemented on Java. The API of Apache Spark is accessed by the Python library [pyspark](https://spark.apache.org/docs/latest/api/python/index.html).
 
 
-1. Download the source code:
+## 1. Download the source code:
 * `git clone https://github.com/Stefan-Wolff/dqm-pipeline`
 
-2. Install Python requirements:
+## 2. Install requirements
+The requirements can be set up manually or using Docker.
+
+### Manual installation
+Install Python requirements:
 * `cd dqm-pipeline`
 * `pip install -r requirements.txt`
 
-3. Install required system tools according to `requirements.system`, i. e. by:
+Install required system tools according to `requirements.system`, i. e. by:
 * `apt install wget`
 * `apt install aria2`
 
+
+### Installation using Docker
+Install, start and join Docker container `wqp`:
+* `docker/setup_docker.sh`
+
+Once installed, it can be joined by:
+* `docker/join_docker.sh`
 
 
 # Directory structure
@@ -86,7 +97,7 @@ This is the core of the processing pipeline. It contains the tasks to process th
 The script `entry_count.py` simply counts the number of records of the entities person, publication and organization.
 
 
-# Use
+# Usage
 The main components of this project are stored in the root of the project and provided as separate scripts. The use of these components is explained in the following.
 
 ## Analyze data quality
@@ -98,7 +109,7 @@ The main components of this project are stored in the root of the project and pr
       -c CHAIN                         the source data related to the transformation chain
 
 
-Run a data quality measurement of specific metrics, i. e. `python analyze.py -m NotNull`. The following metrics are implemented:
+Run a data quality measurement of specific metrics, i. e. `python3 analyze.py -m NotNull`. The following metrics are implemented:
 * MinLength (Completeness)
 * MinValue (Completeness)
 * NotNull (Completeness)
@@ -110,9 +121,9 @@ Run a data quality measurement of specific metrics, i. e. `python analyze.py -m 
 * UniqueObject (Consistency)
 
 
-In addition, run all metrics of a specified data quality dimension (use *Completeness*, *Correctness* or *Consistency*), i. e. `python analyze.py -m Completeness`.
+In addition, run all metrics of a specified data quality dimension (use *Completeness*, *Correctness* or *Consistency*), i. e. `python3 analyze.py -m Completeness`.
 
-To run the measurements on a specific intermediate processing state of the data, simply specify the intermediate state, i. e. `python analyze.py -m Completeness -c ParseBibtex.ParseValues.CorrectOrgs`.
+To run the measurements on a specific intermediate processing state of the data, simply specify the intermediate state, i. e. `python3 analyze.py -m Completeness -c ParseBibtex.ParseValues.CorrectOrgs`.
 
 The results are printed to the console and stored in `repo/quality.json`.
 
@@ -124,7 +135,7 @@ The results are printed to the console and stored in `repo/quality.json`.
       -t TRANSFORMATION         the transformation to run
       -c CHAIN                  the source data related to the transformation chain
 	  
-Run a specific data transformation, i. e. `python transform.py -t ParseBibtex`. The following transformations are implemented:
+Run a specific data transformation, i. e. `python3 transform.py -t ParseBibtex`. The following transformations are implemented:
 * ParseBibtex
 * ParseValues
 * CorrectOrgs
@@ -136,7 +147,7 @@ Run a specific data transformation, i. e. `python transform.py -t ParseBibtex`. 
 * FilterContradict
 * FilterObjects
 
-To run the transformation on a specific intermediate processing state of the data, simply specify the intermediate state, i. e. `python transform.py -c ParseBibtex.ParseValues.CorrectOrgs`.
+To run the transformation on a specific intermediate processing state of the data, simply specify the intermediate state, i. e. `python3 transform.py -c ParseBibtex.ParseValues.CorrectOrgs`.
 
 ## Download base data
 The scripts `load_orcid_persons.py`, `load_orcid_works.py`, `load_crossref.py`, `load_lei.py` and `load_ror.py` downloads the related data. They don't need console parameters. The sources are stored in specific files in the data directory. The loaded data will be stored in `data/input`.
@@ -170,6 +181,24 @@ Use `sample_extremes.py` to print a sample list of extreme values.
 The script `monitor.py` calculates the quality changes of the last process execution. The results will be stored in `repo/monitor.json`. 
 
 This script calculates the difference between the quality indicators before running the transformation tasks and after there execution. In addition, they build the difference of the result indicators between the last run of the process and the process before.
+
+
+## Custom analyse
+The script `custom.py` provides a container for custom code, i. e. specific analyse tasks.
+
+    custom.py [-h] [-c CHAIN]
+
+    options:
+      -h               show this help message and exit
+      -c CHAIN         source chain if analyze transformed data
+
+
+## First steps
+
+### Example data
+Example data is provided for test purposes. It's a subset of the data from ORCID containing 10k records of the entity `works`. Additionally, all records of related entities are included.
+This data can be used to perform quality analyses, i. e. `python3 analyze.py -m Correctness -c examples`. The resulting measurements can be found in `repo/quality.json`.
+Data transformations can also be performed, i. e. `python3 transform.py -t CorrectValues -c examples`. In this case, the result data are stored in `data/parquets/examples.CorrectValues`. The quality of this transformed data can be analyzed by `python3 analyze.py -m Correctness -c examples.CorrectValues`.
 
 
 # Author
