@@ -1,0 +1,1 @@
+{"fields":[{"metadata":{},"name":"uri","nullable":true,"type":"string"},{"metadata":{},"name":"primary_name_display","nullable":true,"type":"string"},{"metadata":{},"name":"replaced","nullable":true,"type":"string"}],"type":"struct"}

@@ -1,6 +1,7 @@
 *.log
 check*.py
-data
+data/*
+!data/schemes
 repo/quality.json
 repo/monitor.json
 !repo/quality_ORCID_2023.json
