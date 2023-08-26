@@ -2,6 +2,7 @@
 check*.py
 data/*
 !data/schemes
+!data/parquets/examples
 repo/quality.json
 repo/monitor.json
 !repo/quality_ORCID_2023.json
