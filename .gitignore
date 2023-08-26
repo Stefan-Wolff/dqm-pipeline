@@ -1,6 +1,9 @@
 *.log
 check*.py
-data/*
+data/input/*
+data/tmp
+data/parquets/*
+!data/input/*.src
 !data/schemes
 !data/parquets/examples
 repo/quality.json
