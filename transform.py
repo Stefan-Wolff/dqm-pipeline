@@ -55,19 +55,16 @@ class Transformer(DataProcessor):
 				entities.update(cur_results.keys())
 			
 			df_results = {e: dataFrames[e] for e in entities}						# save returned dataframes only
-			new_chain = config.transformation
 			
 			
 		# single transformation
 		else:
 			transform_impl = transforms[config.transformation]
 			df_results = transform_impl.run(dataFrames, spark)
-			
-			class_name = type(transform_impl).__name__
-			new_chain = config.chain + "." + class_name if ("initial" != config.chain) else class_name
 		
 		
 		# write results
+		new_chain = config.chain + "." + config.transformation if ("initial" != config.chain) else config.transformation
 		for entity, df in df_results.items():
 			outPath = "data/parquets/" + new_chain + "/" + entity
 			df.write.parquet(outPath, mode="overwrite")
