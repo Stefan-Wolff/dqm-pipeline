@@ -32,6 +32,7 @@ Install required system tools according to `requirements.system`, i. e. by:
 
 ### Installation using Docker
 Install, start and join Docker container `wqp`:
+* `cd dqm-pipeline`
 * `docker/setup_docker.sh`
 
 After that, the application is ready for execution. For a quick start see [Example run](#example-run).
