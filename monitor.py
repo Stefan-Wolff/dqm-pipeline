@@ -1,5 +1,6 @@
 import os
 import json
+import argparse
 
 
 class Monitor():
@@ -8,7 +9,7 @@ class Monitor():
 	QUALITY_FILE = "repo/quality.json"
 	MONITOR_FILE = "repo/monitor.json"
 
-	def run(self):
+	def run(self, config):
 		# init repo files
 		with open(Monitor.QUALITY_FILE, 'r', encoding='utf-8') as qualityIn:
 			quality = json.load(qualityIn)
@@ -29,30 +30,26 @@ class Monitor():
 			
 			
 		# check if there are enough quality measurements in the quality.json
-		for dim in ["Completeness", "Correctness", "Consistency"]:
-			for data_state in ["initial", "complete"]:
-				if 2 > len(ordered[data_state][dim]):
-					print("Monitoring failed because of missing quality measurements of " + data_state + " data for quality dimension ", dim)
-					return
+		for data_state in [config.base, config.result]:
+			if not (config.metric in ordered[data_state]) or (2 > len(ordered[data_state][config.metric])):
+				print("Monitoring failed because of missing quality measurements of " + data_state + " data for quality metric ", config.metric)
+				return
 					
 
 		# build diffs
-		for dim in ["Completeness", "Correctness", "Consistency"]:
-			monitor.append(self._createDiff(ordered["initial"][dim][-1], ordered["initial"][dim][-2]))
+		monitor.append(self._createDiff(ordered[config.base][config.metric][-1], ordered[config.base][config.metric][-2]))
 			
+		increase_before = self._createDiff(ordered[config.base][config.metric][-2], ordered[config.result][config.metric][-2])
+		increase_before["time"] = increase_before["time_2"]
+		increase_before["metrics"] = increase_before["metrics"]
+		increase_before["chain"] = "diff:" + increase_before["chain_1"] + "-" + increase_before["chain_2"]
 		
-		for dim in ["Completeness", "Correctness", "Consistency"]:
-			increase_before = self._createDiff(ordered["initial"][dim][-2], ordered["complete"][dim][-2])
-			increase_before["time"] = increase_before["time_2"]
-			increase_before["metrics"] = increase_before["metrics"]
-			increase_before["chain"] = "diff:" + increase_before["chain_1"] + "-" + increase_before["chain_2"]
-			
-			increase_last = self._createDiff(ordered["initial"][dim][-1], ordered["complete"][dim][-1])
-			increase_last["time"] = increase_last["time_2"]
-			increase_last["metrics"] = increase_last["metrics"]
-			increase_last["chain"] = "diff:" + increase_last["chain_1"] + "-" + increase_last["chain_2"]
-			
-			monitor.append(self._createDiff(increase_before, increase_last))
+		increase_last = self._createDiff(ordered[config.base][config.metric][-1], ordered[config.result][config.metric][-1])
+		increase_last["time"] = increase_last["time_2"]
+		increase_last["metrics"] = increase_last["metrics"]
+		increase_last["chain"] = "diff:" + increase_last["chain_1"] + "-" + increase_last["chain_2"]
+		
+		monitor.append(self._createDiff(increase_before, increase_last))
 		
 			
 		# save
@@ -83,4 +80,10 @@ class Monitor():
 
 
 if "__main__" == __name__:
-	Monitor().run()
+	# init parameters
+	parser = argparse.ArgumentParser(prog='Monitor', description='Monitors the quality improvements over multiple runs.')
+	parser.add_argument('-m', '--metric', help='name of metric to monitor', default='complete')
+	parser.add_argument('-b', '--base', help='the chain of initial measurements', default='initial')
+	parser.add_argument('-r', '--result', help='the chain of resulted measurements', default='complete')
+
+	Monitor().run(parser.parse_args())
