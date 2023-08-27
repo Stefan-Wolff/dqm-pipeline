@@ -206,9 +206,12 @@ The script `custom.py` provides a container for custom code, i. e. specific anal
 ## First steps
 
 ### Example data
-Example data is provided for test purposes. It's a subset of the data from ORCID containing 10k records of the entity `works`. Additionally, all records of related entities are included.
-This data can be used to perform quality analyses, i. e. `python3 analyze.py -m Correctness -c examples`. The resulting measurements can be found in `repo/quality.json`.
-Data transformations can also be performed, i. e. `python3 transform.py -t CorrectValues -c examples`. In this case, the result data are stored in `data/parquets/examples.CorrectValues`. The quality of this transformed data can be analyzed by `python3 analyze.py -m Correctness -c examples.CorrectValues`.
+Example data is provided for test purposes. It's a subset of the data from ORCID containing 10.000 records of the entity `works`. Additionally, all records of related entities are included.
+This data can be used to perform quality analyses, i. e. `python3 analyze.py -m Correctness -c examples`.
+The resulting measurements can be found in `repo/quality.json`.
+Data transformations can also be performed, i. e. `python3 transform.py -t CorrectValues -c examples`.
+In this case, the result data are stored in `data/parquets/examples.CorrectValues`.
+The quality of this transformed data can be analyzed by `python3 analyze.py -m Correctness -c examples.CorrectValues`.
 
 
 #### Example run
