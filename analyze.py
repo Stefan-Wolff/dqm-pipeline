@@ -39,7 +39,7 @@ class Analyzer(DataProcessor):
 		results = {}
 		
 		# run all metrics
-		if "complete" == config.metrics:
+		if "complete" == config.metrics[0]:
 			print("running complete metric stack: ", list(Analyzer.METRICS.keys()))
 			for name in Analyzer.METRICS_COMPLETE:
 				metric = Analyzer.METRICS[name]
@@ -82,7 +82,7 @@ class Analyzer(DataProcessor):
 if "__main__" == __name__:
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Data Analyzer', description='Run metrics')
-	parser.add_argument('-m', '--metrics', help='names of metrics to run', action="extend", nargs="+", default='complete')
+	parser.add_argument('-m', '--metrics', help='names of metrics to run', nargs="+", default=['complete'])
 	parser.add_argument('-c', '--chain', help='the source data related to the transformation chain', default='initial')
 					
 
