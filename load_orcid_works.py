@@ -7,9 +7,9 @@ import lib.xml_parse
 import multiprocessing 
 
 
-SOURCE_FILES = "data/orcid_works_2022.lsv"
-OUT_DIR_RAW = "data/ORCID_works_raw/"
-OUT_DIR = "data/ORCID_works"
+SOURCE_FILES = "data/input/orcid_works_2022.lsv"
+OUT_DIR_RAW = "data/input/ORCID_works_raw/"
+OUT_DIR = "data/input/ORCID_works"
 
 # the configuration for XML parsing using lib.xml_parse.XMLHandler
 SEARCH_FOR = {

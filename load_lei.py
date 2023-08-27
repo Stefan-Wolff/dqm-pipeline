@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 # from https://www.gleif.org/en/lei-data/gleif-concatenated-file/download-the-concatenated-file
 SOURCE_URL = "https://leidata.gleif.org/api/v1/concatenated-files/lei2/get/31275/zip"
-OUT_FILE = "data/LEI.csv"
+OUT_FILE = "data/input/LEI.csv"
 TMP_DIR = "data/tmp/"
 TMP_FILE = TMP_DIR + "LEI.zip"
 

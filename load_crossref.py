@@ -10,7 +10,7 @@ logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s",
 					level		=	logging.INFO)
 
 CORSSREF_TORRENT = "data/April2022Crossref.torrent"
-OUT_DIR = "data/CrossRef/"
+OUT_DIR = "data/input/CrossRef/"
 TMP_DIR = "data/tmp/CrossRef/"
 RESULT_NUM = 32
 

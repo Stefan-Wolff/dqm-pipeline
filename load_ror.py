@@ -3,7 +3,7 @@ import zipfile
 
 
 SOURCE_URL = "https://zenodo.org/record/7926988/files/v1.25-2023-05-11-ror-data.zip"
-OUT_FILE = "data/ROR.csv"
+OUT_FILE = "data/input/ROR.csv"
 TMP_DIR = "data/tmp/"
 
 

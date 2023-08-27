@@ -14,8 +14,8 @@ logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s",
 SOURCE_URL = "https://orcid.figshare.com/ndownloader/files/37635374"
 
 TMP_DIR = "data/tmp/"
-OUT_FILE = "data/ORCID_persons.jsonl.gz"
-ORG_FILE = "data/ORCID_orgUnits.jsonl.gz"
+OUT_FILE = "data/input/ORCID_persons.jsonl.gz"
+ORG_FILE = "data/input/ORCID_orgUnits.jsonl.gz"
 
 # the configuration for XML parsing using lib.xml_parse.XMLHandler
 SEARCH_FOR = {
