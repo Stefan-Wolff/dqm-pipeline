@@ -4,6 +4,8 @@ data/input/*
 data/tmp
 data/parquets/*
 !data/input/*.src
+!data/input/April2022Crossref.torrent
+!data/input/orcid_works_2022.lsv
 !data/schemes
 !data/parquets/examples
 repo/quality.json
