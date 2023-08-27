@@ -2,8 +2,8 @@ FROM debian:12
 WORKDIR /usr/local/processing/dqm-pipeline/
 
 # Local time zone
-rm /etc/localtime
-ln -s /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+RUN rm /etc/localtime
+RUN ln -s /usr/share/zoneinfo/Europe/Berlin /etc/localtime
 
 RUN apt update
 
