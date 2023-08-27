@@ -18,7 +18,7 @@ In addition it uses [Apache Spark](https://spark.apache.org/), which is implemen
 * `git clone https://github.com/Stefan-Wolff/dqm-pipeline`
 
 ## 2. Install requirements
-The requirements can be set up manually or using Docker.
+The requirements can be set up [manually](manual-installation) or using [Docker](installation-using-docker).
 
 ### Manual installation
 Install Python requirements:
@@ -34,8 +34,7 @@ Install required system tools according to `requirements.system`, i. e. by:
 Install, start and join Docker container `wqp`:
 * `docker/setup_docker.sh`
 
-Once installed, it can be joined by:
-* `docker/join_docker.sh`
+After that, the application is ready for execution. For a quick start see [Example run](#example-run).
 
 
 # Directory structure
@@ -105,8 +104,8 @@ The main components of this project are stored in the root of the project and pr
     
     options:
       -h                               show this help message and exit
-      -m METRICS [METRICS ...]         names of metrics to run
-      -c CHAIN                         the source data related to the transformation chain
+      -m METRICS [METRICS ...]         names of metrics to run, default: run all
+      -c CHAIN                         the source data related to the transformation chain, default: initial
 
 
 Run a data quality measurement of specific metrics, i. e. `python3 analyze.py -m NotNull`. The following metrics are implemented:
@@ -120,10 +119,12 @@ Run a data quality measurement of specific metrics, i. e. `python3 analyze.py -m
 * NoContradict (Consistency)
 * UniqueObject (Consistency)
 
-
+Or simply run all metrics with `python3 analyze.py`.
 In addition, run all metrics of a specified data quality dimension (use *Completeness*, *Correctness* or *Consistency*), i. e. `python3 analyze.py -m Completeness`.
 
 To run the measurements on a specific intermediate processing state of the data, simply specify the intermediate state, i. e. `python3 analyze.py -m Completeness -c ParseBibtex.ParseValues.CorrectOrgs`.
+
+
 
 The results are printed to the console and stored in `repo/quality.json`.
 
@@ -132,8 +133,8 @@ The results are printed to the console and stored in `repo/quality.json`.
 
     options:
       -h                        show this help message and exit
-      -t TRANSFORMATION         the transformation to run
-      -c CHAIN                  the source data related to the transformation chain
+      -t TRANSFORMATION         the transformation to run, default: complete
+      -c CHAIN                  the source data related to the transformation chain, default: initial
 	  
 Run a specific data transformation, i. e. `python3 transform.py -t ParseBibtex`. The following transformations are implemented:
 * ParseBibtex
@@ -147,6 +148,7 @@ Run a specific data transformation, i. e. `python3 transform.py -t ParseBibtex`.
 * FilterContradict
 * FilterObjects
 
+Or simply run the complete transformation stack with `python3 transform.py`.
 To run the transformation on a specific intermediate processing state of the data, simply specify the intermediate state, i. e. `python3 transform.py -c ParseBibtex.ParseValues.CorrectOrgs`.
 
 ## Download base data
@@ -178,9 +180,16 @@ Use `sample_extremes.py` to print a sample list of extreme values.
 
 
 ## Monitor quality improvement
-The script `monitor.py` calculates the quality changes of the last process execution. The results will be stored in `repo/monitor.json`. 
+The script `monitor.py` calculates the quality changes of the last process run related to the run before. The results will be stored in `repo/monitor.json`.  It calculates the difference between the quality indicators before running the transformation tasks and after there execution. In addition, they build the difference of the result indicators between the last run of the process and the process before.
 
-This script calculates the difference between the quality indicators before running the transformation tasks and after there execution. In addition, they build the difference of the result indicators between the last run of the process and the process before.
+    monitor.py [-h] [-m METRIC] [-b BASE] [-r RESULT]
+    options:
+      -h                show this help message and exit
+      -m METRIC         name of metric to monitor
+      -b BASE           the chain of initial measurements, default: initial
+      -r RESULT         the chain of resulted measurements, default: complete
+	  
+Notice: There must be at least two measurements of base data (before transformation) and two measurements of resulted data (after measurements).
 
 
 ## Custom analyse
@@ -200,6 +209,39 @@ Example data is provided for test purposes. It's a subset of the data from ORCID
 This data can be used to perform quality analyses, i. e. `python3 analyze.py -m Correctness -c examples`. The resulting measurements can be found in `repo/quality.json`.
 Data transformations can also be performed, i. e. `python3 transform.py -t CorrectValues -c examples`. In this case, the result data are stored in `data/parquets/examples.CorrectValues`. The quality of this transformed data can be analyzed by `python3 analyze.py -m Correctness -c examples.CorrectValues`.
 
+
+#### Example run
+
+1. Analyze example data: `python3 analyze.py -c examples`
+2. Run data transformations: `python3 transform.py -c examples`
+3. Analyze resulting data: `python3 analyze.py -c examples.complete`
+
+
+#### Full run
+
+1. Load data
+>`python3 load_orcid_persons.py`
+>`python3 init_parquets.py -e persons`
+>`python3 init_parquets.py -e orgUnits`
+>`python3 load_orcid_works.py`
+>`python3 init_parquets.py -e works`
+>`python3 load_crossref.py`
+>`python3 init_parquets.py -e crossRef`
+>`python3 load_lei.py`
+>`python3 init_parquets.py -e lei`
+>`python3 load_ror.py`
+>`python3 init_parquets.py -e ROR`
+>`python3 load_fundref.py`
+>`python3 init_parquets.py -e fundref`
+
+2. Analyze data quality before transformation: `python3 analyze.py`
+
+3. Run the complete transformation stack: `python3 transform.py`
+
+4. Analyze data quality after transformation: `python3 analyze.py -c complete`
+
+5. Monitor quality changes: `python3 monitor.py`
+(only useful from the second run of the process)
 
 # Author
 **Stefan Wolff**
