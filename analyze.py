@@ -28,14 +28,30 @@ class Analyzer(DataProcessor):
 		"UniqueObject": UniqueObject(),
 		"Consistency": Consistency()
 	}
+	
+	METRICS_COMPLETE = [
+		"Completeness",
+		"Correctness",
+		"Consistency"
+	]
 
 	def _run(self, dataFrames, config, spark):
-		# run metrics
 		results = {}
-		for name, metric in Analyzer.METRICS.items():
-			if name in config.metrics:
+		
+		# run all metrics
+		if "complete" == config.metrics:
+			print("running complete metric stack: ", list(Analyzer.METRICS.keys()))
+			for name in Analyzer.METRICS_COMPLETE:
+				metric = Analyzer.METRICS[name]
 				metric_results = metric.calc(dataFrames, spark)
 				results.update(metric_results)
+		
+		# run given metrics
+		else:
+			for name, metric in Analyzer.METRICS.items():
+				if name in config.metrics:
+					metric_results = metric.calc(dataFrames, spark)
+					results.update(metric_results)
 					
 		print(results)
 
@@ -66,7 +82,7 @@ class Analyzer(DataProcessor):
 if "__main__" == __name__:
 	# init parameters
 	parser = argparse.ArgumentParser(prog='Data Analyzer', description='Run metrics')
-	parser.add_argument('-m', '--metrics', help='names of metrics to run', action="extend", nargs="+", required=True)
+	parser.add_argument('-m', '--metrics', help='names of metrics to run', action="extend", nargs="+", default='complete')
 	parser.add_argument('-c', '--chain', help='the source data related to the transformation chain', default='initial')
 					
 
