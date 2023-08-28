@@ -9,7 +9,7 @@ logging.basicConfig(format		=	"%(asctime)s %(levelname)s: %(message)s",
 					filename	=	__file__.split(".")[0] + ".log",
 					level		=	logging.INFO)
 
-CORSSREF_TORRENT = "data/April2022Crossref.torrent"
+CORSSREF_TORRENT = "data/input/April2022Crossref.torrent"
 OUT_DIR = "data/input/CrossRef/"
 TMP_DIR = "data/tmp/CrossRef/"
 RESULT_NUM = 32
@@ -95,9 +95,8 @@ def extract_data(data):
 def run():
 	# harvest data
 	os.system("mkdir -p " + OUT_DIR)
-	os.system("rm " + OUT_DIR + "*")
 	os.system("mkdir -p " + TMP_DIR)
-	os.system("aria2c data/April2022Crossref.torrent --seed-time=0 -d " + TMP_DIR)
+	os.system("aria2c " + CORSSREF_TORRENT + " --seed-time=0 -d " + TMP_DIR)
 	
 	# organize source files
 	for entry in os.listdir(TMP_DIR):
