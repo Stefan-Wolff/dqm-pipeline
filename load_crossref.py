@@ -89,7 +89,7 @@ def extract_data(data):
 					json.dump(fetch_data(record), outZip)
 					outZip.write('\n')
 
-	logging.info(outFile, " done")
+	logging.info(outFile + " done")
 	
 
 def run():
