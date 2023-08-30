@@ -31,8 +31,11 @@ class Monitor():
 			
 		# check if there are enough quality measurements in the quality.json
 		for data_state in [config.base, config.result]:
-			if not (config.metric in ordered[data_state]) or (2 > len(ordered[data_state][config.metric])):
+			if not config.metric in ordered[data_state]:
 				print("Monitoring failed because of missing quality measurements of " + data_state + " data for quality metric ", config.metric)
+				return
+			if 2 > len(ordered[data_state][config.metric]):
+				print("Monitoring failed because there is only one run of quality measurements of " + data_state + " data for quality metric ", config.metric)
 				return
 					
 
