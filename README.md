@@ -223,20 +223,20 @@ The quality of this transformed data can be analyzed by `python3 analyze.py -m C
 
 #### Full run
 
-1. Load data
->`python3 load_orcid_persons.py`
->`python3 init_parquets.py -e persons`
->`python3 init_parquets.py -e orgUnits`
->`python3 load_orcid_works.py`
->`python3 init_parquets.py -e works`
->`python3 load_crossref.py`
->`python3 init_parquets.py -e crossRef`
->`python3 load_lei.py`
->`python3 init_parquets.py -e lei`
->`python3 load_ror.py`
->`python3 init_parquets.py -e ROR`
->`python3 load_fundref.py`
->`python3 init_parquets.py -e fundref`
+1. Load data  
+>`python3 load_orcid_persons.py`  
+>`python3 init_parquets.py -e persons`  
+>`python3 init_parquets.py -e orgUnits`  
+>`python3 load_orcid_works.py`  
+>`python3 init_parquets.py -e works`  
+>`python3 load_crossref.py`  
+>`python3 init_parquets.py -e crossRef`  
+>`python3 load_lei.py`  
+>`python3 init_parquets.py -e lei`  
+>`python3 load_ror.py`  
+>`python3 init_parquets.py -e ROR`  
+>`python3 load_fundref.py`  
+>`python3 init_parquets.py -e fundref`  
 
 2. Analyze data quality before transformation: `python3 analyze.py`
 
@@ -250,5 +250,5 @@ The quality of this transformed data can be analyzed by `python3 analyze.py -m C
 # Author
 **Stefan Wolff**
 
-# Notice
-A reference to a publication will be added in the future that describes the underlying workflow (the WQP) in detail.
+# The workflow in detail
+[https://doi.org/10.25366/2023.211](https://doi.org/10.25366/2023.211)
